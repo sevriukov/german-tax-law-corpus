@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """
-make_korpus_export.py -- Ausfuhr des offenen Teils der Arbeitsdatenbank in Parquet-Dateien.
+make_korpus_export.py (02.11.2026: под фундамент 1.0.1 -- куски по структуре struktur_fragmente вместо document_chunks;
+только замороженные документы fundament_eingefroren; отдельных заголовков нет -- путь по структуре в каждом куске)
+-- выгрузка ОТКРЫТОЙ части базы права в набор Parquet (слово владельца проекта 09.10.2026: «начинай сборку набора»).
 
-Nur lesend; schreibt in einen eigenen Ordner, sendet nichts. Quellen, die nicht weitergegeben werden dürfen, stehen in einer
-lokalen Datei (eine Quelle je Zeile, Standard: ~/.config/leckermath/nicht_oeffentlich.txt) und werden vollständig ausgelassen:
-weder Texte noch Kopfabschnitte noch Vektoren. Quellen mit nicht geprüften Bedingungen bleiben enthalten und sind gekennzeichnet
-(Spalten `rights_note`, `significance`).
+Только чтение базы; пишет в отдельную папку (по умолчанию ~/Documents/leckermath-korpus). Наружу ничего не отправляет.
+В набор НЕ входят (решения владельца проекта 01.10, 04.10, 08.10, 09.10): справка DATEV и Lexware, план счетов DATEV, учебный курс, литература --
+ни тексты, ни заголовки, ни векторы. Источники с непроверенными условиями входят с пометкой (слово владельца проекта 09.10.2026: «идут с такой же
+пометкой… если что-то сомнительное или второстепенной значимости -- помечаем и оставляем, пусть люди пользуются; что нельзя показывать --
+показывать не будем»).
 
-  python3 make_korpus_export.py                  # Texte: documents, chunks, titles, SOURCES.md
-  python3 make_korpus_export.py --vektoren       # Vektoren (BAAI/bge-m3, float16) als eigene Dateien
-  ... --out <Ordner>   --nur <Quelle>[,<Quelle>]
+  python3 make_korpus_export.py                  # тексты: documents, chunks, titles, SOURCES.md, отчёт
+  python3 make_korpus_export.py --vektoren       # векторы bge-m3 (float16) отдельными файлами: фрагменты и заголовки
+  ... --out <папка>   --nur <источник>[,<источник>]
 """
 import json
-import os
 import re
 import sys
 import time
@@ -23,9 +25,8 @@ import psycopg2
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-DSN = os.environ.get("LM_DSN", "host=localhost port=5432 dbname=steuer_corpus_test user=postgres")
-_nf = Path("~/.config/leckermath/nicht_oeffentlich.txt").expanduser()
-NICHT = tuple(z.strip() for z in _nf.read_text(encoding="utf-8").split("\n") if z.strip() and not z.startswith("#")) if _nf.exists() else ()
+DSN = "host=localhost port=5432 dbname=steuer_corpus_test user=postgres password=postgres"
+NICHT = ("datev_help", "datev_kontenrahmen", "lexware_help", "sternmeister_kurs", "literatur", "literatur_alt_2010")
 # источник -> (откуда, основание или условия, пометка значимости)
 KERN, ERG = "Referenz", "ergänzend"
 QUELLEN = {
@@ -70,7 +71,7 @@ def texte(con, out, quellen, bericht):
         cur = con.cursor(name=f"d_{q}")
         cur.itersize = 2000
         cur.execute("""SELECT doc_id, title, url, reference_number, authority, effective_date, publication_date, valid_from, valid_until, metadata, full_text
-                       FROM documents WHERE source = %s ORDER BY id""", (q,))
+                       FROM documents d WHERE source = %s AND EXISTS (SELECT 1 FROM fundament_eingefroren e WHERE e.document_id = d.id) ORDER BY id""", (q,))
         rows, treffer, zeichen = [], 0, 0
         for r in cur:
             meta = {k: v for k, v in (r[9] or {}).items() if k in META_OK}
@@ -88,32 +89,25 @@ def texte(con, out, quellen, bericht):
         ok = {r["doc_id"] for r in rows}
         n_doc = len(rows)
         del rows
-        # заголовки документов (отдельный чанк-заголовок: закон -- название и §; суд -- карточка)
-        cur = con.cursor(name=f"t_{q}")
-        cur.itersize = 5000
-        cur.execute("""SELECT d.doc_id, t.kind, t.title_text, t.norms FROM document_titles t JOIN documents d ON d.id = t.document_id
-                       WHERE d.source = %s ORDER BY d.id""", (q,))
-        tit = [{"doc_id": a, "kind": b, "title_text": c, "norms": d or []} for a, b, c, d in cur if a in ok]
-        cur.close()
-        (out / "data" / "titles").mkdir(parents=True, exist_ok=True)
-        pq.write_table(pa.Table.from_pylist(tit), out / "data" / "titles" / f"{q}.parquet", compression="zstd")
+        tit = []                                         # 02.11: заголовков отдельно нет -- путь по структуре (pfad) в каждом куске
         # фрагменты
         cur = con.cursor(name=f"c_{q}")
         cur.itersize = 5000
-        cur.execute("""SELECT d.doc_id, c.chunk_index, c.chunk_text FROM document_chunks c JOIN documents d ON d.id = c.document_id
-                       WHERE d.source = %s ORDER BY d.id, c.chunk_index""", (q,))
-        (out / "data" / "chunks").mkdir(parents=True, exist_ok=True)
+        # 02.11: куски по структуре документа; целые § и абзацы (para/abs) -- сборки из тех же кусков, в набор не идут
+        cur.execute("""SELECT dm.doc_id, f.ord, f.art, f.pfad_text, f.vorlauf, f.text_roh, f.q_status FROM struktur_fragmente f JOIN documents_meta dm ON dm.id = f.document_id
+                       WHERE dm.source = %s AND f.art NOT IN ('para','abs','para_lang','abs_lang') ORDER BY f.document_id, f.ord, f.id""", (q,))
+        (out / "data" / "fragments").mkdir(parents=True, exist_ok=True)
         puffer, teil, n_ch = [], 0, 0
-        for a, b, c in cur:
+        for a, b, art, pfad, vor, c, qs in cur:
             if a not in ok:
                 continue
-            puffer.append({"doc_id": a, "chunk_index": b, "text": c})
+            puffer.append({"doc_id": a, "ord": b, "kind": art, "path": pfad, "lead_in": vor, "text": c, "source_check": qs})
             if len(puffer) >= TEIL:
-                pq.write_table(pa.Table.from_pylist(puffer), out / "data" / "chunks" / f"{q}-{teil:03d}.parquet", compression="zstd")
+                pq.write_table(pa.Table.from_pylist(puffer), out / "data" / "fragments" / f"{q}-{teil:03d}.parquet", compression="zstd")
                 n_ch += len(puffer)
                 puffer, teil = [], teil + 1
         if puffer:
-            pq.write_table(pa.Table.from_pylist(puffer), out / "data" / "chunks" / f"{q}-{teil:03d}.parquet", compression="zstd")
+            pq.write_table(pa.Table.from_pylist(puffer), out / "data" / "fragments" / f"{q}-{teil:03d}.parquet", compression="zstd")
             n_ch += len(puffer)
         cur.close()
         bericht[q] = {"dokumente": n_doc, "zeichen": zeichen, "fragmente": n_ch, "titel": len(tit), "ausgelassen": treffer, "sekunden": round(time.time() - t0)}
@@ -169,7 +163,7 @@ def main():
     cur.execute("SELECT source, count(*) FROM documents GROUP BY 1")
     in_db = dict(cur.fetchall())
     unbekannt = [s for s in in_db if s not in QUELLEN and s not in NICHT]
-    if unbekannt:
+    if unbekannt and "--nur" not in arg:   # 25.10: с --nur выгружаются только источники из QUELLEN (решённые), прочие не трогаются
         sys.exit(f"СТОП: источники без решения о публикации: {unbekannt} -- внесите в QUELLEN или NICHT")
     quellen = [s for s in QUELLEN if s in in_db]
     if "--nur" in arg:

@@ -7,11 +7,23 @@ Skripte, mit denen der offene Teil des Korpus (Datensatz `german-tax-law-corpus`
 | Schritt | Skripte |
 |---|---|
 | Sammeln | `collect_gii_aktuell.py` (Gesetze, amtliches XML), `collect_wayback_gii.py` (frühere Fassungen), `collect_rii.py` (Bundesgerichte), `collect_bund_neu.py` (BGBl, Verwaltungsvorschriften), `collect_nrwe_haftung.py` (Landesrechtsprechung) |
-| Aufbereiten | `prepare_laws_neu.py`, `prepare_historie.py`, `prepare_historie2.py`, `prepare_rii_dump.py`, `prepare_bund_neu.py`, `prepare_handbuecher.py`, `prepare_ustae.py`, `prepare_haftung.py` |
-| Teilen in Abschnitte | `rebuild_structured_gpu.py`, `chunk_bmf_structured.py` |
+| Aufbereiten | `prepare_rii_bverwg_bag.py` (BVerwG/BAG, ab v0.3.0), `prepare_laws_neu.py`, `prepare_historie.py`, `prepare_historie2.py`, `prepare_rii_dump.py`, `prepare_bund_neu.py`, `prepare_handbuecher.py`, `prepare_ustae.py`, `prepare_haftung.py` |
+| Teilen nach Gliederung (ab v0.3.0) | `struktur_laws.py`, `struktur_innen_laws.py`, `struktur_historie.py` (Gesetze: § › Abs. › Nr.), `struktur_gerichte.py` (Entscheidungen: Rn.), `struktur_verwaltung.py`, `struktur_verwaltung_hb.py` (Verwaltungsanweisungen, BMF-Handbücher: R/H, UStAE, AEAO), `struktur_baum.py` (Gliederungsbaum), `struktur_text.py`, `token_grenze.py`, `load_struktur_fragmente.py`, `load_struktur_laws.py` |
+| Abgleich mit dem Ausgangstext | `quelle_lauf.py`, `quelle_basis.py`, `kopf_eigen_probe.py` (jeder Abschnitt: Stelle im Ausgangstext, Abweichung, Status) |
+| Teilen in Abschnitte (bis v0.2) | `rebuild_structured_gpu.py`, `chunk_bmf_structured.py` |
 | Laden und Nachbessern | `load_laws_neu.py`, `load_laws_kleb.py` |
 | Prüfen | `audit_chunking.py`, `spacy_boundary_validator.py` |
 | Ausfuhr | `make_korpus_export.py` |
+
+## Versionen / Versions
+
+| Datum | Skripte | Datensatz (Hugging Face) | Änderung |
+|---|---|---|---|
+| 20.10.2026 | v0.2.0 | 0.2 (25.10.2026) | Allgemeiner Lader, Qualitätsprüfung, EU-Recht, Grundsteuer der Länder |
+| 02.11.2026 | **v0.3.0** | **1.0.1** | Teilung entlang der Gliederung jedes Dokuments, Abgleich jedes Abschnitts mit dem Ausgangstext, Ausfuhr `data/fragments` mit Pfad |
+| 10.11.2026 (geplant) | v0.4 | 1.1 | neue Quellen, korrigierte Pfade der BMF-Handbücher, Zitationsgraph |
+
+Beschreibung der Datenbank: [leckermath.de/steuerbasis.html](https://leckermath.de/steuerbasis.html) · Datensatz: [huggingface.co/datasets/sevriukov/german-tax-law-corpus](https://huggingface.co/datasets/sevriukov/german-tax-law-corpus)
 
 ### Neu in v0.2.0 (Stand 20.10.2026)
 
