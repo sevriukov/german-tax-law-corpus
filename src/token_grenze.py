@@ -72,7 +72,7 @@ def zerlegen(pfad, text, verweise, stufe=0):
     return None
 
 
-con = psycopg2.connect(dbname="steuer_staging", user="postgres", password="postgres", host="localhost")
+con = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost")
 cur = con.cursor()
 cur.execute("""SELECT id, knoten, document_id, ord, pfad_text, text_roh, verweise, art FROM struktur_fragmente
                WHERE art IN ('blatt','abs','para') AND length(pfad_text) + length(text_roh) + coalesce(length(verweise), 0) > 10000""")
@@ -93,7 +93,7 @@ for fid, kn, doc, ord_, pfad, text, verw, art in rows:
     upd.append(("blatt_geteilt", fid))
     for l, t, a in teile:
         vl, t = vorlauf_teilen(t)                   # 24.10: шапка таблицы — в vorlauf
-        neu.append((kn, doc, ord_, f"{pfad} › {l}" if l else pfad, t, hashlib.sha256(t.encode()).hexdigest(), "token-2026-10-28v", a, verw, vl))
+        neu.append((kn, doc, ord_, f"{pfad} › {l}" if l else pfad, t, hashlib.sha256(t.encode()).hexdigest(), "token-2026-10-24v", a, verw, vl))
         stat[f"teil_{a}"] = stat.get(f"teil_{a}", 0) + 1
 print("TOKEN_GRENZE", stat, flush=True)
 if probe:

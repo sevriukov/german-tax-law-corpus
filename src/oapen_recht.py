@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""oapen_recht.py -- открытые книги по налоговому, финансовому и общему праву из каталога OAPEN (18.10.2026, Сергей: «то же самое, но без запретов»).
+"""oapen_recht.py -- открытые книги по налоговому, финансовому и общему праву из каталога OAPEN (18.10.2026, владелец проекта: «то же самое, но без запретов»).
 Каталог -- через OAI-PMH (library.oapen.org/oai/request, разрешено; поисковый REST-API закрыт по IP). Отбор: язык немецкий, тема права
 по названию/теме/ключевым словам, лицензия Creative Commons. Скачивание PDF -- только для отобранных, пауза 3 с.
 Книги -> уровень 3 (база steuer_literatur), наружу не уходят (правило проекта), как и прочая литература.
 
-    python3 oapen_recht.py katalog      # -> quellen_neu/literatur_open/oapen_kandidaten.json
-    python3 oapen_recht.py laden        # скачать PDF кандидатов -> quellen_neu/literatur_open/oapen/
+    python3 oapen_recht.py katalog      # -> quellen_roh/literatur_open/2026-10-20/oapen_kandidaten.json
+    python3 oapen_recht.py laden        # скачать PDF кандидатов -> quellen_roh/literatur_open/2026-10-20/oapen/
     python3 oapen_recht.py katalog_doab # 20.10.2026: то же по каталогу DOAB (directory.doabooks.org/oai/request; REST закрыт по IP, OAI открыт)
-                                        # -> quellen_neu/literatur_open/doab_kandidaten.json
+                                        # -> quellen_roh/literatur_open/2026-10-20/doab_kandidaten.json
 """
 import json
 import re
@@ -18,7 +18,7 @@ import xml.etree.ElementTree as ET
 
 OAI = "https://library.oapen.org/oai/request"
 NS = {"oai": "http://www.openarchives.org/OAI/2.0/", "dc": "http://purl.org/dc/elements/1.1/", "oai_dc": "http://www.openarchives.org/OAI/2.0/oai_dc/"}
-D = "quellen_neu/literatur_open"
+D = "quellen_roh/literatur_open/2026-10-20"
 THEMEN = {
  "Steuerrecht": r"steuer|abgabe|fiskal|umsatzsteuer|einkommensteuer|grundsteuer|erbschaft|zoll",
  "Finanz- und Haushaltsrecht": r"finanzverfassung|haushalt|finanzausgleich|staatsverschuldung|schuldenbremse|öffentliche finanzen",
@@ -81,8 +81,8 @@ def katalog(oai=OAI, name="oapen"):
 
 
 def laden():
-    """Раскладка (18.10.2026, Сергей): книги издательства Springer (запрет TDM на их сайте, § 44b Abs. 3 UrhG) -> NUR_LESEN/springer (только чтение,
-    в базу не грузить); лицензия CC …-NC (только некоммерческое) -> NUR_LESEN/nc (решает Сергей); прочие открытые -> literatur_open/oapen (для базы).
+    """Раскладка (18.10.2026, владелец проекта): книги издательства Springer (запрет TDM на их сайте, § 44b Abs. 3 UrhG) -> NUR_LESEN/springer (только чтение,
+    в базу не грузить); лицензия CC …-NC (только некоммерческое) -> NUR_LESEN/nc (решает владелец проекта); прочие открытые -> literatur_open/oapen (для базы).
     Лицензия -- со страницы книги в OAPEN (ссылка creativecommons.org/licenses/…)."""
     import os
     ks = json.load(open(f"{D}/oapen_kandidaten.json", encoding="utf-8"))

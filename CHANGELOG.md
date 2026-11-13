@@ -1,5 +1,15 @@
 # Änderungen
 
+## v0.4.0 – 13.11.2026 (Skripte; Datensatz nach Stand V3 folgt)
+- Abgleich mit dem Ausgangstext (`quelle_lauf.py`): Tabellen werden über die eigene Tabellenschicht geprüft, Randnummern als eigene Zeile, Spaltenüberschriften nur bei Tabellenzeilen.
+- Sperrschrift und zerrissene Wörter (`vektor_umbau.py`): Zusammenführung nach den Worthäufigkeiten der Datenbank selbst; zusammengesetzte Wörter werden nicht getrennt.
+- Gesetze als Gliederungsbaum bis zur Ebene Buchstabe (`struktur_baum.py`); Verwaltungsanweisungen, Handbücher und Entscheidungen (`struktur_verwaltung*.py`, `struktur_gerichte.py`): Überschriften ungekürzt, Einleitungssatz als eigenes Feld, neu geteilt werden nur Dokumente, die die Prüfung nicht bestanden haben.
+- Abdeckung je Paragraf (`paragraf_abdeckung.py`): Paragrafen aus Änderungsartikeln von Gesetzentwürfen.
+- Ausfuhr (`make_korpus_export.py`): Dokumente mit Kennzeichen „klassifiziert“, „geschützt“ oder Lizenz „intern …“ werden nicht ausgeführt. **Hinweis:** In Datensatz 1.0.1 waren 3 133 Entscheidungen aus Open Legal Data mit Lizenz „intern (§ 87a UrhG)“ enthalten; sie werden in der nächsten Datensatzversion entfernt.
+- Wächter (`storozh_laden.py`): Stillezeit ab Start, letzte Fehlerzeile im Bericht.
+- Datenbankzugang ohne Passwort im Code (`~/.pgpass` bzw. `PGPASSFILE`).
+- Bewusst nicht im Korpus: Bundesgesetzblatt (wiederholt geltende Gesetze und Fassungen; Originaldateien bleiben in der Sammlung) und abgeschlossene Gesetzentwürfe (nur laufende Entwürfe).
+
 ## v0.3.0 – 02.11.2026 (Datensatz 1.0.1)
 - Teilung nur nach der eigenen Gliederung jedes Dokuments, nicht nach Zeichenzahl: Gesetz § › Abs. › Satz/Nr. › Buchst. (`struktur_laws.py`, `struktur_innen_laws.py`, `struktur_historie.py`), Entscheidung Leitsatz/Tenor/Tatbestand/Gründe › Rn. (`struktur_gerichte.py`), Verwaltungsanweisung Abschnitt/Rz./Tz. (`struktur_verwaltung.py`); jeder Abschnitt trägt seinen Gliederungspfad, der Einleitungssatz einer Aufzählung steht in eigenem Feld.
 - BMF-Handbücher (`struktur_verwaltung_hb.py`): Überschriften R/H, UStAE-Abschnitte, AEAO; „§ N“ im Fließtext (im Ausgangstext eigene Zeile) gilt nicht mehr als Überschrift – 452 Dokumente mit verschobenem Pfad werden in 1.1 neu geteilt.

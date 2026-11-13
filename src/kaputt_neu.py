@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""kaputt_neu.py (19.10.2026, Сергей «1а»): документы с испорченным текстом (QUALITAETSTEST_RAG_2026-10-19, дефект D1) -> текст заново.
+"""kaputt_neu.py (19.10.2026, владелец проекта «1а»): документы с испорченным текстом (QUALITAETSTEST_RAG_2026-10-19, дефект D1) -> текст заново.
 У этих PDF шрифт без таблицы знаков: текстовый слой сдвинут («'HXWVFKHU» = «Deutscher», цифры -> управляющие знаки, умлауты пропадают).
 Список: quellen_neu/kaputt_schrift_docs.csv (id, doc_id, source, url, origin, испорченных фрагментов, всего фрагментов);
 заново -- документы с >= 10 испорченными фрагментами или долей >= 20 % и с адресом PDF (остальные только исключаются из выдачи поиска).
@@ -76,7 +76,7 @@ def main():
     bases += [b for b in EXTRA if b not in bases]
     if "--nur" in sys.argv:
         bases = sys.argv[sys.argv.index("--nur") + 1].split(",")
-    con = psycopg2.connect(host=os.environ.get("PGHOST", "localhost"), user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), dbname="steuer_corpus_test")
+    con = psycopg2.connect(host="localhost", user="postgres", dbname="steuer_corpus_test")
     cur = con.cursor()
     out = open(f"de_law_corpus/prepared/kaputt_neu{tag}.jsonl", "w", encoding="utf-8")
     bak = open(f"quellen_neu/kaputt_alt_backup{tag}.jsonl", "w", encoding="utf-8")

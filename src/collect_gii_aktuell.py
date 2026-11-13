@@ -2,7 +2,7 @@
 """
 collect_gii_aktuell.py -- действующие тексты всех федеральных законов с официального сайта gesetze-im-internet.de (xml.zip по списку gii-toc.xml).
 Зачем: источник laws в базе взят из стороннего набора (harshildarji/bundesrecht), где порядок предложений и перечней внутри абзаца потерян
-(дефект найден 08.10.2026). Официальный XML -- основа для сверки и перезагрузки. Только скачивание в de_law_corpus/gii_aktuell/; резюмируемо.
+(дефект найден 08.10.2026). Официальный XML -- основа для сверки и перезагрузки. Только скачивание в quellen_roh/gii_aktuell/2026-10-08/; резюмируемо.
     python3 collect_gii_aktuell.py
 """
 import re, time
@@ -10,7 +10,7 @@ from pathlib import Path
 import requests
 
 UA = {"User-Agent": "Mozilla/5.0 (LeckerMath research; local legal database)"}
-OUT = Path("de_law_corpus/gii_aktuell"); OUT.mkdir(parents=True, exist_ok=True)
+OUT = Path("quellen_roh/gii_aktuell/2026-10-08"); OUT.mkdir(parents=True, exist_ok=True)
 toc = requests.get("https://www.gesetze-im-internet.de/gii-toc.xml", headers=UA, timeout=120).text
 (OUT / "gii-toc.xml").write_text(toc, encoding="utf-8")
 links = re.findall(r"<link>(.*?)</link>", toc)

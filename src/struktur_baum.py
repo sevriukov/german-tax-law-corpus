@@ -20,13 +20,12 @@ import psycopg2
 
 import prepare_laws_neu as P
 from struktur_text import VORLAUF, trennung
-from struktur_laws import GRENZE, dl_items, fein, flat, table_rows, table_spalten, text_einheiten  # noqa: F401
+from struktur_laws import GRENZE, dl_items, fein, flat, table_rows, text_einheiten  # noqa: F401
 
 SRC = Path("quellen_roh/gii_aktuell/2026-10-08")
-OUT = Path("quellen_neu/vorlauf_fix/prepared")
+OUT = Path("de_law_corpus/prepared")
 W = re.compile(r"[A-Za-zÄÖÜäöüß]{3,}")
 # 23.10 вечер: перенос строки в XML («Gruppen-<BR/> behandlung») — слово склеивается; «Kranken- und …» остаётся
-LIGATUR = [("\ufb00", "ff"), ("\ufb01", "fi"), ("\ufb02", "fl"), ("\ufb03", "ffi"), ("\ufb04", "ffl"), ("\ufb05", "st"), ("\ufb06", "st")]
 TRENN = re.compile(r"(?<=[A-Za-zÄÖÜäöüß])-\s+(?!(?:und|oder|bzw|sowie|bis|als|noch|wie|u|o|beziehungsweise)\b)(?=[a-zäöüß])")
 
 
@@ -40,13 +39,6 @@ class Baum:
              "text": trennung(text.replace("\u00ad", "")).strip(), **kw}   # 22.10 проверка: мягкий перенос рвёт слова для модели
         self.knoten.append(k)
         return k["id"]
-
-
-def zeilen(b, parent, tb):
-    """30.10: строки таблицы — узлы Zeile; в тексте только ячейки, подписи столбцов — eigenschaften.spalten (решение 24.10)"""
-    sp = table_spalten(tb)
-    for i, r in enumerate(table_rows(tb), 1):
-        b.neu(parent, "Zeile", str(i), r, **({"eigenschaften": {"spalten": sp}} if sp else {}))
 
 
 def by_id(b, i):
@@ -80,14 +72,11 @@ def dd_baum(b, parent, dd):
     own = teile[0][1]
     for art, x in teile[1:]:
         if art == "DL":
-            # 31.10 вечер (EStG § 22: таблица Ertragsanteil в «a) … aa) …» уходила текстом буквы): буква разбирается как пункт —
-            # рекурсивно, со своими вложенными перечнями (aa, bb …) и таблицами; прежде весь DD буквы писался текстом её узла
-            for (n, _), dd2 in zip(dl_items(x), [y for y in x if y.tag == "DD"]):
-                bid = b.neu(parent, "Buchst", n.rstrip(".)"))
-                k = len(b.knoten) - 1
-                b.knoten[k]["text"] = (n + " " + dd_baum(b, bid, dd2)).strip()   # метка в тексте, как у Nr («1.1.3», «a)»): на неё ссылаются
+            for n, t in dl_items(x):
+                b.neu(parent, "Buchst", n.rstrip(".)"), (n + " " + t).strip())   # метка в тексте, как у Nr («1.1.3», «a)»): на неё ссылаются
         elif art == "table":
-            zeilen(b, parent, x)
+            for i, r in enumerate(table_rows(x), 1):
+                b.neu(parent, "Zeile", str(i), r)
         elif x:
             b.neu(parent, "Schlusssatz", "", x)
     return own
@@ -97,7 +86,8 @@ def norm_baum(b, parent, content):
     """Content нормы -> узлы абзацев, пунктов, букв, строк таблиц"""
     for p in list(content) or [content]:
         if p.tag == "table":
-            zeilen(b, parent, p)
+            for i, r in enumerate(table_rows(p), 1):
+                b.neu(parent, "Zeile", str(i), r)
             continue
         if p.tag == "DL":
             for (n, _), dd in zip(dl_items(p), [x for x in p if x.tag == "DD"]):
@@ -107,7 +97,8 @@ def norm_baum(b, parent, content):
         if p.tag != "P":
             if any(True for _ in p.iter("table")):
                 for tb in p.iter("table"):
-                    zeilen(b, parent, tb)
+                    for i, r in enumerate(table_rows(tb), 1):
+                        b.neu(parent, "Zeile", str(i), r)
             elif P.text_of(p).strip():
                 b.neu(parent, "Block", p.tag, P.text_of(p).replace("\n", " "))
             continue
@@ -131,7 +122,8 @@ def norm_baum(b, parent, content):
         for j, (intro, el) in enumerate(segs):
             ziel = aid if j == 0 else (b.neu(aid, "Satzteil", str(j + 1), intro) if intro else aid)
             if el.tag == "table":
-                zeilen(b, ziel, el)
+                for i, r in enumerate(table_rows(el), 1):
+                    b.neu(ziel, "Zeile", str(i), r)
                 continue
             for (n, _), dd in zip(dl_items(el), [x for x in el if x.tag == "DD"]):
                 nid = b.neu(ziel, "Nr", n.rstrip(".)"))
@@ -145,10 +137,7 @@ def parse(path):
     """-> (jurabk, [узлы], {(jurabk, enbez): [(titel, id узла §)]})"""
     try:
         z = zipfile.ZipFile(path)
-        roh = z.read(next(n for n in z.namelist() if n.endswith(".xml")))
-        for lig, ers in LIGATUR:                    # 31.10: «Behandlungspﬂege» (ﬂ U+FB02) — то же слово; иначе поиск и сверка видят обрывок «Behandlungsp»
-            roh = roh.replace(lig.encode("utf-8"), ers.encode("utf-8"))
-        root = ET.fromstring(roh)
+        root = ET.fromstring(z.read(next(n for n in z.namelist() if n.endswith(".xml"))))
     except Exception:
         return None
     for br in root.iter("BR"):                     # 23.10 вечер: «können<BR/>diese» склеивалось в одно слово — разрыв строки = пробел
@@ -223,7 +212,7 @@ def blaetter(knoten):
         pfad = " › ".join(x for x in (f"{a['marke']} {a['text']}".strip() if a["ebene"] in ("Gliederung", "Para") else
                                       (f"{a['ebene']} {a['marke']}".strip() if a["marke"] else "") if a["ebene"] != "Gesetz" else
                                       (f"{a['text']} ({a['marke']})" if a["text"] else a["marke"]) for a in kette) if x)
-        einleitung = k.get("vorlauf") or " … ".join(a["text"] for a in kette if a["ebene"] not in ("Gesetz", "Gliederung", "Para") and a["text"])
+        einleitung = " … ".join(a["text"] for a in kette if a["ebene"] not in ("Gesetz", "Gliederung", "Para") and a["text"])
         eigen = f"{k['ebene']} {k['marke']}".strip() if k["ebene"] not in ("Para",) and k["marke"] else ""
         for l, t in fein([("", k["text"])]):
             out.append({"knoten": k["id"], "pfad": pfad + (f" › {eigen}" if eigen else "") + (f" {l}" if l else ""),
@@ -236,7 +225,7 @@ def main():
     zips = sorted(SRC.glob("*.zip"))
     if probe:
         zips = [z for z in zips if z.stem.split("_")[0].lower() in {p.lower() for p in probe}]
-    cur = psycopg2.connect(dbname="steuer_staging", user="postgres", password="postgres", host="localhost").cursor()
+    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost").cursor()
     cur.execute("SELECT id, title, full_text, metadata->>'jurabk' FROM documents WHERE source = 'laws' AND valid_until IS NULL")
     db, jurabk_of = {}, {}
     for i, title, text, jab in cur.fetchall():
@@ -321,10 +310,7 @@ def main():
                             by_id(b, nodes[a])["text"] = t.split(VORLAUF, 1)[0]
                         b.neu(nodes[a], "Nr", teile[-1], t.split(VORLAUF, 1)[-1])
                     else:
-                        # 30.10: вводная (до VORLAUF) — не в текст узла, а в его поле vorlauf (прежде fein резал её на «Satz» под каждым пунктом)
-                        vl, eig = t.split(VORLAUF, 1) if VORLAUF in t else ("", t)
-                        n_id = b.neu(pid, l.split(" ")[0].rstrip(".") if l else "Abs", l.split(" ", 1)[-1] if l else "", eig,
-                                     **({"vorlauf": vl} if vl else {}))
+                        n_id = b.neu(pid, l.split(" ")[0].rstrip(".") if l else "Abs", l.split(" ", 1)[-1] if l else "", t)
                         if l.startswith("Abs.") and len(teile) == 2:   # абзац «(2) …» — к нему же пункты «Abs. 2 Nr. n»
                             nodes[l] = n_id
                 for k in b.knoten:

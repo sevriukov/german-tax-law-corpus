@@ -20,8 +20,8 @@ Skripte, mit denen der offene Teil des Korpus (Datensatz `german-tax-law-corpus`
 | Datum | Skripte | Datensatz (Hugging Face) | Änderung |
 |---|---|---|---|
 | 20.10.2026 | v0.2.0 | 0.2 (25.10.2026) | Allgemeiner Lader, Qualitätsprüfung, EU-Recht, Grundsteuer der Länder |
-| 02.11.2026 | **v0.3.0** | **1.0.1** | Teilung entlang der Gliederung jedes Dokuments, Abgleich jedes Abschnitts mit dem Ausgangstext, Ausfuhr `data/fragments` mit Pfad |
-| 10.11.2026 (geplant) | v0.4 | 1.1 | neue Quellen, korrigierte Pfade der BMF-Handbücher, Zitationsgraph |
+| 02.11.2026 | v0.3.0 | 1.0.1 | Teilung entlang der Gliederung jedes Dokuments, Abgleich jedes Abschnitts mit dem Ausgangstext, Ausfuhr `data/fragments` mit Pfad |
+| 13.11.2026 | **v0.4.0** | 1.0.1 (nächste Version nach Stand V3 in Vorbereitung) | Abgleich mit Tabellenschicht, Gliederungsbaum, ungekürzte Überschriften, Ausfuhr ohne nicht öffentliche Dokumente, Datenbankzugang ohne Passwort im Code |
 
 Beschreibung der Datenbank: [leckermath.de/steuerbasis.html](https://leckermath.de/steuerbasis.html) · Datensatz: [huggingface.co/datasets/sevriukov/german-tax-law-corpus](https://huggingface.co/datasets/sevriukov/german-tax-law-corpus)
 

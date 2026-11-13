@@ -2,7 +2,7 @@
 """
 prepare_ustae.py -- действующая сводная редакция UStAE (PDF с сайта BMF, «aktuelle Version») -> документы по разделам
 (Abschnitt 19.1 и т.д.) -> de_law_corpus/prepared/ustae.jsonl (источник bmf_handbuecher, уровень 1).
-Скачать заново: curl -L -o de_law_corpus/bmf_ustae/UStAE_aktuell.pdf \
+Скачать заново: curl -L -A "Mozilla/5.0" -o quellen_roh/bmf_ustae/2026-10-02/UStAE_aktuell.pdf \
   "https://www.bundesfinanzministerium.de/Content/DE/Downloads/BMF_Schreiben/Steuerarten/Umsatzsteuer/Umsatzsteuer-Anwendungserlass/Umsatzsteuer-Anwendungserlass-aktuell.pdf?__blob=publicationFile"
 Загрузка: python3 load_new_sources.py load --sources ustae
 """
@@ -11,7 +11,7 @@ import re
 
 import pymupdf
 
-SRC = "de_law_corpus/bmf_ustae/UStAE_aktuell.pdf"
+SRC = "quellen_roh/bmf_ustae/2026-10-02/UStAE_aktuell.pdf"
 OUT = "de_law_corpus/prepared/ustae.jsonl"
 
 

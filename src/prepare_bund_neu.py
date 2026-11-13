@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 prepare_bund_neu.py -- подготовка собранного collect_bund_neu.py к загрузке (04.10.2026):
-  vwv   quellen_neu/vwv/*.htm  -> de_law_corpus/prepared/vwv_bund.jsonl  (Verwaltungsvorschriften des Bundes, уровень 1)
+  vwv   quellen_roh/vwv/2026-10-04/*.htm  -> de_law_corpus/prepared/vwv_bund.jsonl  (Verwaltungsvorschriften des Bundes, уровень 1)
   bgbl  quellen_neu/bgbl/*.pdf -> de_law_corpus/prepared/bgbl.jsonl      (BGBl Teil I и II с 2023 г., уровень 1; дополняет источник bgbl)
 """
 import html

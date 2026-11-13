@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """
 prepare_rii_dump.py -- решения федеральных судов из открытого набора elenanereiss/rechtsprechungen-dump (Hugging Face, CC0;
-78 909 решений с rechtsprechung-im-internet.de на 30.07.2025; файл de_law_corpus/rii_dump/dump_30072025.jsonl)
+78 909 решений с rechtsprechung-im-internet.de на 30.07.2025; файл quellen_roh/rii_dump/2026-10-08/dump_30072025.jsonl)
 -> de_law_corpus/prepared/bsg.jsonl (BSG целиком; прежняя тематическая выборка сохранена в bsg_thema_311.jsonl)
 -> de_law_corpus/prepared/bgh.jsonl (BGH: IX и II гражданские сенаты целиком + решения прочих сенатов с налоговыми,
    бухгалтерскими и корпоративными нормами; новый источник bgh, уровень 1)
 Решения, уже лежащие в базе (bsg, bgh_haftung, bgh_criminal), пропускаются по номеру дела и дате.
 Только подготовка файлов; в базу не пишет. Загрузка: python3 -u load_new_sources.py load --sources bsg bgh
 """
-import os
 import collections
 import json
 import re
@@ -17,7 +16,7 @@ from pathlib import Path
 
 import psycopg2
 
-SRC = Path("de_law_corpus/rii_dump/dump_30072025.jsonl")
+SRC = Path("quellen_roh/rii_dump/2026-10-08/dump_30072025.jsonl")
 PREP = Path("de_law_corpus/prepared")
 THEMA = re.compile(r"StBerG|Steuerberat|\bAO\b|EStG|UStG|KStG|GewStG|\bHGB\b|GmbHG|ErbStG|GrEStG|Abgabenordnung|Steuerhinterzieh|§ 370\b|Insolvenzanfecht|"
                    r"Geschäftsführerhaftung|Bilanz|Buchführung|Sozialversicherungsbeitr|§ 266a|Wirtschaftsprüfer|Jahresabschluss|InsO")
@@ -32,7 +31,7 @@ def body_of(r):
 
 
 def main():
-    cur = psycopg2.connect(dbname="steuer_corpus_test", user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), host=os.environ.get("PGHOST", "localhost")).cursor()
+    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost").cursor()
     cur.execute("SELECT title FROM documents WHERE source IN ('bsg', 'bgh_haftung', 'bgh_criminal')")
     have = set()
     for (t,) in cur.fetchall():

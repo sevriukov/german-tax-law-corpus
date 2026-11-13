@@ -2,10 +2,9 @@
 """bafin_rs_titel.py (19.10.2026): 76 старых документов BaFin (bafin_rs_*, bafin_dl_*) с заголовком просто «Rundschreiben» и без адреса.
 Заголовок и адрес берутся из начала текста (строка «Rundschreiben NN/JJJJ (XX) - …» и «Quelle: https://www.bafin.de/…»).
 Сверка с новым сбором bafin_web/bafin_pdf (18.10) по адресу: совпадение -> отмечается metadata.doppelt_mit (удаление -- отдельно).
-Меняются только documents.title, url, metadata; заголовок-фрагмент (document_titles) со своим вектором -- при пересчёте заголовков (решение Сергея).
+Меняются только documents.title, url, metadata; заголовок-фрагмент (document_titles) со своим вектором -- при пересчёте заголовков (решение владельца проекта).
     python3 bafin_rs_titel.py [--schreiben]   -> список: quellen_neu/bafin_rs_titel.jsonl
 """
-import os
 import json
 import re
 import sys
@@ -13,7 +12,7 @@ import sys
 import psycopg2
 from psycopg2.extras import Json
 
-con = psycopg2.connect(host=os.environ.get("PGHOST", "localhost"), user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), dbname="steuer_corpus_test")
+con = psycopg2.connect(host="localhost", user="postgres", dbname="steuer_corpus_test")
 cur = con.cursor()
 cur.execute("SELECT url, doc_id FROM documents WHERE source='bafin' AND url ~ '^http'")
 url_neu = {}

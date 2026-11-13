@@ -15,7 +15,7 @@ from multiprocessing import Pool
 import psycopg2
 
 from struktur_laws import fein
-from struktur_text import DATUM, VORLAUF, einl_aus, fein_eigen, fein_tief, fortsetzung, kleine_zusammen, saeubern
+from struktur_text import DATUM, VORLAUF, einl_aus, fein_tief, fortsetzung, kleine_zusammen, saeubern
 
 W = re.compile(r"[A-Za-zÄÖÜäöüß]{3,}")
 KOPF = re.compile(r"^\s*(?:#{1,6}\s*)?(LEITS[ÄA]TZE?|TENOR|TATBESTAND|ENTSCHEIDUNGSGR[ÜU]NDE|GR[ÜU]NDE|Leits[äa]tze?|Tenor|Tatbestand|"
@@ -219,7 +219,7 @@ def einleitungen(units):
 
 def doc(row):
     i, src, title, text = row
-    units = kleine_zusammen(fein_eigen(einleitungen(einheiten(text)), fein)) or [("", " ".join(saeubern(text).split()))]
+    units = kleine_zusammen(fein_tief(einleitungen(einheiten(text)), fein)) or [("", " ".join(saeubern(text).split()))]
     kopf = (title or "").strip()   # 28.10: без обрезки по знакам (владелец проекта 22.10 / Main 28.10: заголовок целиком)
     frs = [{"document_id": i, "pfad": kopf + (f" › {l}" if l else ""), "text": t} for l, t in units]
     # заголовки разделов и метки изложения — в пути, не в тексте: покрытие считается по тексту + путям
@@ -231,13 +231,13 @@ def doc(row):
 
 def main():
     q = sys.argv[1:]
-    cur = psycopg2.connect(dbname="steuer_staging", user="postgres", password="postgres", host="localhost").cursor()
+    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost").cursor()
     # 23.10 (владелец проекта): NUR_NICHT_BESTANDEN=1 — резать только документы, не прошедшие проверку (dok_pruefung.bestanden = false);
 # 24.10: AUCH_IDS=1,2,3 — и эти (исходник заменён после проверки: старая отметка устарела)
     cur.execute("SELECT id, source, title, full_text FROM documents WHERE source = ANY(%s)" + ((" AND id IN (" + ",".join(x.strip() for x in open(os.environ["NUR_IDS"]) if x.strip()) + ")") if os.environ.get("NUR_IDS") else (" AND (id NOT IN (SELECT document_id FROM dok_pruefung WHERE bestanden) OR id IN (" + os.environ.get("AUCH_IDS", "0") + "))" if os.environ.get("NUR_NICHT_BESTANDEN") else "")), (q,))   # 23.10: и прежние редакции
     rows = cur.fetchall()
     st = Counter()
-    with Pool(24) as p, open(f"quellen_neu/vorlauf_fix/prepared/struktur_fragmente_{'_'.join(q)}{'_nachschnitt' if os.environ.get('NUR_NICHT_BESTANDEN') or os.environ.get('NUR_IDS') else ''}.jsonl", "w", encoding="utf-8") as f:
+    with Pool(24) as p, open(f"de_law_corpus/prepared/struktur_fragmente_{'_'.join(q)}{'_nachschnitt' if os.environ.get('NUR_NICHT_BESTANDEN') or os.environ.get('NUR_IDS') else ''}.jsonl", "w", encoding="utf-8") as f:
         for i, frs, fehl in p.imap_unordered(doc, rows, chunksize=50):
             st["docs"] += 1
             st["fragmente"] += len(frs)

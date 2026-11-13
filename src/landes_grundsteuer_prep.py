@@ -13,7 +13,7 @@ import json
 import re
 import subprocess
 
-D = "quellen_neu/landes_grundsteuer"
+D = "quellen_roh/landes_grundsteuer/2026-10-20"
 GESETZE = [  # файл, сокращение, название, земля, начало тела, конец тела, источник, состояние
     ("nds_gvbl_2021_27.pdf", "NGrStG", "Niedersächsisches Grundsteuergesetz", "Niedersachsen", r"Niedersächsisches Grundsteuergesetz \(NGrStG\)\s*\n\s*Vom",
      r"Hannover, den", "https://www.niedersachsen.de/download/171798/Nds._GVBl._Nr._27_2021_vom_13.07.2021_S._469-508.pdf", "Nds. GVBl. 2021 S. 502"),

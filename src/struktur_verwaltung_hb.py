@@ -115,7 +115,7 @@ def einheiten(text, quelle=""):
             if m and m.group(1):
                 push()
                 cur_l = (zitat_l + " › " if zitat_l else "") + f"Abs. {m.group(1)}"
-                cur_t = ([zitat_einl + " …"] if zitat_einl else []) + [l]
+                cur_t = [zitat_einl + "\x1f" + l] if zitat_einl else [l]   # 02.11: вводная цитаты — поле vorlauf
                 vorn_len = len(zitat_einl) + 3 if zitat_einl else 0
             else:
                 cur_t.append(l)
@@ -152,8 +152,8 @@ def einheiten(text, quelle=""):
             stapel.append([typ, f"{TYP_NAME[typ]} {num * len(typ) if typ != 'n' else num}", ""])
             cur_l = label(*[s[1] for s in stapel])
             vorn = " … ".join(x for x in [basis] + [s[2] for s in stapel[:-1]] if x)
-            cur_t = [vorn + " … " + l] if vorn else [l]
-            vorn_len = len(vorn) + 3 if vorn else 0
+            cur_t = [vorn + "\x1f" + l] if vorn else [l]   # 02.11: вводная — отдельным полем (struktur_text.VORLAUF), а не « … » в тексте (сверка видела лишние буквы)
+            vorn_len = len(vorn) + 1 if vorn else 0
         elif m and (m.group(3) or m.group(4)) and len(l) < 160:   # раздел «II.» / заголовок «12. …» вне перечня
             push()
             absl, basis, stapel = (f"Abschnitt {m.group(4)}" if m.group(4) else f"Nr. {m.group(3)}"), "", []
@@ -199,7 +199,7 @@ def doc(row):
 
 def main():
     quellen = sys.argv[1:]
-    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", password="postgres", host="localhost").cursor()
+    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost").cursor()
     # 23.10: и прежние редакции (valid_until задан) — раньше 3 148 редакций BMF/ЕС остались без нарезки (проверка фундамента, п. 1)
     # 23.10 (владелец проекта): NUR_NICHT_BESTANDEN=1 — резать только документы, не прошедшие проверку (dok_pruefung.bestanden = false);
 # 24.10: AUCH_IDS=1,2,3 — и эти (исходник заменён после проверки: старая отметка устарела)

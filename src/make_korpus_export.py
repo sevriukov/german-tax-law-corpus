@@ -20,12 +20,16 @@ import sys
 import time
 from pathlib import Path
 
+# 06.11.2026 (владелец проекта «б»): пометки непубличности — три ключа metadata (klassifiziert, geschuetzt, lizenz «intern …»), литература;
+# до 06.11 отбор шёл только по списку источников, и 3 133 решения Open Legal Data (lizenz «intern (§ 87a UrhG)») ушли в HF 1.0.1.
+NICHT_OEFFENTLICH = "{m} ? 'klassifiziert' OR {m} ? 'geschuetzt' OR coalesce({m}->>'lizenz', '') LIKE 'intern%%' OR {m} ? 'literatur' OR coalesce({m}->>'intern', '') IN ('true', '1')"
+
 import numpy as np
 import psycopg2
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-DSN = "host=localhost port=5432 dbname=steuer_corpus_test user=postgres password=postgres"
+DSN = "host=localhost port=5432 dbname=steuer_corpus_test user=postgres"
 NICHT = ("datev_help", "datev_kontenrahmen", "lexware_help", "sternmeister_kurs", "literatur", "literatur_alt_2010")
 # источник -> (откуда, основание или условия, пометка значимости)
 KERN, ERG = "Referenz", "ergänzend"
@@ -71,7 +75,8 @@ def texte(con, out, quellen, bericht):
         cur = con.cursor(name=f"d_{q}")
         cur.itersize = 2000
         cur.execute("""SELECT doc_id, title, url, reference_number, authority, effective_date, publication_date, valid_from, valid_until, metadata, full_text
-                       FROM documents d WHERE source = %s AND EXISTS (SELECT 1 FROM fundament_eingefroren e WHERE e.document_id = d.id) ORDER BY id""", (q,))
+                       FROM documents d WHERE source = %s AND EXISTS (SELECT 1 FROM fundament_eingefroren e WHERE e.document_id = d.id)
+                         AND NOT (""" + NICHT_OEFFENTLICH.format(m="d.metadata") + """) ORDER BY id""", (q,))
         rows, treffer, zeichen = [], 0, 0
         for r in cur:
             meta = {k: v for k, v in (r[9] or {}).items() if k in META_OK}
@@ -95,7 +100,9 @@ def texte(con, out, quellen, bericht):
         cur.itersize = 5000
         # 02.11: куски по структуре документа; целые § и абзацы (para/abs) -- сборки из тех же кусков, в набор не идут
         cur.execute("""SELECT dm.doc_id, f.ord, f.art, f.pfad_text, f.vorlauf, f.text_roh, f.q_status FROM struktur_fragmente f JOIN documents_meta dm ON dm.id = f.document_id
-                       WHERE dm.source = %s AND f.art NOT IN ('para','abs','para_lang','abs_lang') ORDER BY f.document_id, f.ord, f.id""", (q,))
+                       WHERE dm.source = %s AND f.art NOT IN ('para','abs','para_lang','abs_lang')
+                         AND EXISTS (SELECT 1 FROM fundament_eingefroren e WHERE e.document_id = dm.id)
+                         AND NOT (""" + NICHT_OEFFENTLICH.format(m="dm.metadata") + """) ORDER BY f.document_id, f.ord, f.id""", (q,))
         (out / "data" / "fragments").mkdir(parents=True, exist_ok=True)
         puffer, teil, n_ch = [], 0, 0
         for a, b, art, pfad, vor, c, qs in cur:

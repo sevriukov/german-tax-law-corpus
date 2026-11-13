@@ -9,7 +9,6 @@ prepare_historie2.py -- прежние редакции из снимков Ар
   2) у уже загруженных редакций уточняются окна (valid_from раньше / valid_until позже / changed_before раньше) -- UPDATE без пересчёта векторов.
   python3 prepare_historie2.py [--apply]     (без --apply окна не меняются, только отчёт)
 """
-import os
 import hashlib
 import json
 import re
@@ -88,7 +87,7 @@ def parse_zip(path):
 
 def main():
     apply = "--apply" in sys.argv
-    conn = psycopg2.connect(dbname="steuer_corpus_test", user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), host=os.environ.get("PGHOST", "localhost"))
+    conn = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost")
     cur = conn.cursor()
     cur.execute("SELECT id, source, title, full_text, valid_from, valid_until, metadata->>'changed_before' FROM documents WHERE source IN ('laws','laws_historie')")
     current, hist, hist_bag = defaultdict(set), {}, {}

@@ -14,7 +14,6 @@ A[-WINDOW:] + " " + B[:WINDOW], прогоняет spaCy (senter) и смотр�
     python3 spacy_boundary_validator.py --audit-samples audit_chunking_v3_samples.jsonl --defect abbr_cut
 """
 
-import os
 import argparse
 import json
 import re
@@ -27,7 +26,6 @@ from rebuild_structured_gpu import DocumentRouter
 DB_CONFIG = {
     "dbname": "steuer_corpus_test",
     "user": "postgres",
-    "password": os.environ.get("PGPASSWORD"),
     "host": "localhost",
     "port": "5432",
 }

@@ -16,7 +16,7 @@ from multiprocessing import Pool
 import psycopg2
 
 from struktur_laws import fein
-from struktur_text import DATUM, VORLAUF, einl_aus, fein_eigen, fein_tief, fortsetzung, kleine_zusammen, saeubern
+from struktur_text import DATUM, VORLAUF, einl_aus, fein_tief, fortsetzung, kleine_zusammen, saeubern
 
 W = re.compile(r"[A-Za-zÄÖÜäöüß]{3,}")
 MARKE = re.compile(r"^\s*(?:\((\d+[a-z]?)\)|(?:Rz\.|Rn\.|Tz\.|Randnummer|Randziffer)\s*(\d+[a-z]?)|(\d{1,3})\.\s+(?=[A-ZÄÖÜ„])|([IVX]{1,5})\.\s+(?=[A-ZÄÖÜ„]))")
@@ -64,9 +64,6 @@ TEIL = re.compile(r"^(?:(?:Erster|Zweiter|Dritter|Vierter|Fünfter|Sechster|Sieb
                   r"(?:Teil|Abschnitt|Unterabschnitt|Titel)|(?:Teil|Abschnitt|Unterabschnitt|Kapitel|Titel)\s+[0-9IVX]+[a-z]?)\b(?!\s+(?:Nr|Nummer|Abs|Absatz|Satz|des|der|und|bis|§)\b)")
 # «Artikel 12 Bundessozialhilfegesetz», «§ 1 Aufhebung der Anerkennung …» — Überschrift (без точки в конце), не фраза «§ 3 gilt …»
 ARTIKEL = re.compile(r"^(Artikel\s+\d+[a-z]?)(?:\s+(?!(?:Nr|Nummer|Abs|Absatz|Satz|des|der|und|bis|wird|werden|gilt|ist|§)\b)\S.*)?$")
-# 30.10: «Anlage 1 (zu § 1 Absatz 1 …)», «Anhang 3 Muster …» — свой раздел (прежде текст приложений BGBl прилипал к последнему абзацу
-# последнего §: 127495 § 105 Abs. 2 Nr. 3 — все приложения с бланками); ссылка в тексте («Anlage 13 zu verwenden.») — не заголовок
-ANLAGE = re.compile(r"^(?:Anlage|Anhang)\s+\d+[a-z]?\b(?!\s+(?:Nr|Nummer|Abs|Absatz|Satz|des|der|und|bis|wird|werden|gilt|ist|findet|enthält|zu\s+verwenden)\b)")
 BEREICH = re.compile(r"^(Entwurf eines\b.*|Gesetzentwurf\b.*|Begründung\b.*|Stellungnahme des Bundesrates\b.*|Gegenäußerung der Bundesregierung\b.*|"
                      r"Beschlu(?:ss|ß)empfehlung\b.*|Bericht de[rs] Abgeordneten\b.*|Bericht des\b.*Ausschusses\b.*|Vorblatt\b.*)$")
 # обоснование законопроекта (Drucksachen): «Zu Artikel 1» -> «Zu § 1» / «Zu Nummer 2» -> «Zu Absatz 3» / «Zu Buchstabe e» -> «Zu Satz 2»
@@ -133,11 +130,9 @@ def einheiten(text, quelle=""):
             zu = [x for x in zu if x[0] < rang] + [[rang, re.split(r"[:.]\s", l, maxsplit=1)[0]]]
             absl, basis, stapel = "", "", []
             cur_l, cur_t, vorn_len, kopf_zeile = label(), [l], 0, l
-        elif ueber and (ARTIKEL.match(l) or PARAGRAF.match(l) or ANLAGE.match(l)):   # Artikel n / § n с заголовком / Anlage n (30.10)
+        elif ueber and (ARTIKEL.match(l) or PARAGRAF.match(l)):   # Artikel n / § n с заголовком
             push()
             artikel, absl, basis, stapel, zu = l, "", "", [], []  # 28.10: без обрезки по знакам (владелец проекта 22.10 / Main 28.10: заголовок целиком)
-            if ANLAGE.match(l):                             # 30.10: приложение — вне разделов основного текста
-                teil = ""
             cur_l, cur_t, vorn_len, kopf_zeile = label(), [l], 0, l
         elif m and (m.group(1) or m.group(2)):              # абзац «(n)» / Rz., Tz.
             push()
@@ -195,7 +190,7 @@ def typ_von(p):
 
 def doc(row):
     i, src, title, text = row
-    units = kleine_zusammen(fein_eigen(einheiten(text, src), fein)) or [("", " ".join(saeubern(text).split()))]
+    units = kleine_zusammen(fein_tief(einheiten(text, src), fein)) or [("", " ".join(saeubern(text).split()))]
     kopf = (title or "").strip()
     frs = [{"document_id": i, "pfad": kopf + (f" › {l}" if l else ""), "text": t} for l, t in units]
     wb, wf = Counter(W.findall(saeubern(text))), Counter(W.findall(" ".join(t for _, t in units)))
@@ -204,14 +199,14 @@ def doc(row):
 
 def main():
     quellen = sys.argv[1:]
-    cur = psycopg2.connect(dbname="steuer_staging", user="postgres", password="postgres", host="localhost").cursor()
+    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost").cursor()
     # 23.10: и прежние редакции (valid_until задан) — раньше 3 148 редакций BMF/ЕС остались без нарезки (проверка фундамента, п. 1)
     # 23.10 (владелец проекта): NUR_NICHT_BESTANDEN=1 — резать только документы, не прошедшие проверку (dok_pruefung.bestanden = false);
 # 24.10: AUCH_IDS=1,2,3 — и эти (исходник заменён после проверки: старая отметка устарела)
     cur.execute("SELECT id, source, title, full_text FROM documents WHERE source = ANY(%s)" + ((" AND id IN (" + ",".join(x.strip() for x in open(os.environ["NUR_IDS"]) if x.strip()) + ")") if os.environ.get("NUR_IDS") else (" AND (id NOT IN (SELECT document_id FROM dok_pruefung WHERE bestanden) OR id IN (" + os.environ.get("AUCH_IDS", "0") + "))" if os.environ.get("NUR_NICHT_BESTANDEN") else "")), (quellen,))
     rows = cur.fetchall()
     st = Counter()
-    with Pool(24) as p, open(f"quellen_neu/vorlauf_fix/prepared/struktur_fragmente_{'_'.join(quellen) if len(quellen) <= 6 else 'verw_' + str(len(quellen)) + 'q'}{'_nachschnitt' if os.environ.get('NUR_NICHT_BESTANDEN') or os.environ.get('NUR_IDS') else ''}.jsonl", "w", encoding="utf-8") as f:
+    with Pool(24) as p, open(f"de_law_corpus/prepared/struktur_fragmente_{'_'.join(quellen) if len(quellen) <= 6 else 'verw_' + str(len(quellen)) + 'q'}{'_nachschnitt' if os.environ.get('NUR_NICHT_BESTANDEN') or os.environ.get('NUR_IDS') else ''}.jsonl", "w", encoding="utf-8") as f:
         for i, src, frs, fehl in p.imap_unordered(doc, rows, chunksize=50):
             st["docs"] += 1
             st["fragmente"] += len(frs)

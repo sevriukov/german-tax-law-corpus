@@ -4,7 +4,7 @@ collect_rii.py -- решения федеральных судов с офици
 Берём то, чего в базе нет и что понадобилось на реальном деле:
   bsg        -- Bundessozialgericht, дела о страховых взносах (сенаты KR и P: Krankenversicherung, Pflegeversicherung)
   bgh_haftung -- BGH, IX. Zivilsenat (ответственность Steuerberater и адвокатов) -- позже отбор по тексту
-  python3 collect_rii.py            # скачать (резюмируемо, пауза 1 с) -> de_law_corpus/rii/<набор>/*.xml
+  python3 collect_rii.py            # скачать (резюмируемо, пауза 1 с) -> quellen_roh/rii_bsg_bgh_haftung/2026-10-02/<набор>/*.xml
   python3 collect_rii.py prepare    # -> de_law_corpus/prepared/bsg.jsonl, bgh_haftung.jsonl (отбор по теме)
 """
 import io
@@ -17,7 +17,7 @@ from pathlib import Path
 
 import requests
 
-OUT = Path("de_law_corpus/rii")
+OUT = Path("quellen_roh/rii_bsg_bgh_haftung/2026-10-02")
 UA = {"User-Agent": "Mozilla/5.0 (LeckerMath research; local legal database)"}
 
 

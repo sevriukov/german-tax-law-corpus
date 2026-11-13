@@ -11,7 +11,6 @@ prepare_historie.py -- прежние редакции федеральных з
   python3 prepare_historie.py   -> de_law_corpus/prepared/laws_historie.jsonl
 Источник уровня 1, но НЕ действующее право: valid_until заполнен, поиск помечает «VERALTET».
 """
-import os
 import hashlib
 import json
 import re
@@ -52,7 +51,7 @@ def sections(md):
 
 
 def main():
-    cur = psycopg2.connect(dbname="steuer_corpus_test", user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), host=os.environ.get("PGHOST", "localhost")).cursor()
+    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost").cursor()
     cur.execute("SELECT title, full_text FROM documents WHERE source='laws'")
     current = defaultdict(set)
     for title, text in cur.fetchall():

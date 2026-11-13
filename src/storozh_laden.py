@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Сторож загрузки (16.10.2026; 18.10.2026 -- параметры вместо жёсткой привязки к chain_quellen_2026_10l.sh, пороги GPU, лестница 64->48->32).
-Правило (Сергей через Main, 18.10.2026): ни одна цепочка загрузки не стартует без сторожа.
+Правило (владелец проекта через Main, 18.10.2026): ни одна цепочка загрузки не стартует без сторожа.
 Раз в 60 с:
   - цепочка завершилась без маркера, в журнале загрузки новый Traceback, или он молчит дольше --hang-min минут
     -> остановка по точным PID (цепочка, загрузчик, все его потомки), пауза, перезапуск той же цепочки
        (загрузчик пропускает записанные doc_id; запись в БД -- целыми пачками по 200 док. в одной транзакции, частичных нет);
   - сбои подряд без новых документов в БД -> батч по лестнице 64 -> 48 -> 32 (пишется в quellen_neu/emb_batch);
-    как только документов прибавилось -- обратно 64 (правило Сергея 16.10: насовсем не снижать). 5 сбоев без прогресса -> стоп и запись;
+    как только документов прибавилось -- обратно 64 (правило владельца проекта 16.10: насовсем не снижать). 5 сбоев без прогресса -> стоп и запись;
   - GPU >= --temp-limit °C или память >= --mem-limit MiB (по rebuild_watchdog.py: 90 °C; 8193 = по памяти не останавливать) -> остановка,
     пауза 300 с, перезапуск;
   - маркер завершения в журнале цепочки -> выход. Журнал сторожа: quellen_neu/storozh_laden.log
@@ -29,6 +29,14 @@ ap.add_argument("--hang-min", type=int, default=45)
 ap.add_argument("--temp-limit", type=int, default=90)
 ap.add_argument("--mem-limit", type=int, default=8193)
 A = ap.parse_args()
+# 23.10.2026 (Main, после ночного сбоя: два оркестра шли параллельно): одна цепочка на карты — второй сторож не стартует
+import fcntl, sys as _sys
+_lock = open("/tmp/leckermath_storozh.lock", "w")
+try:
+    fcntl.flock(_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except OSError:
+    print("СТОП: уже идёт другая цепочка под сторожем (/tmp/leckermath_storozh.lock)", flush=True)
+    _sys.exit(2)
 EV, BATCH, LEITER, COOL = "quellen_neu/storozh_laden.log", "quellen_neu/emb_batch", ["64", "48", "32"], 300
 CHAIN_NAME = os.path.basename(A.chain)
 
@@ -85,11 +93,24 @@ def stopp(grund):
 
 def start(grund, batch):
     open(BATCH, "w").write(batch + "\n")
+    # 31.10.2026: журнал загрузки от прошлого прогона (KF2 29.10) был старше --hang-min -> «молчит 2606 мин» через 3 мин после старта, 5 ложных перезапусков;
+    # отсчёт тишины — с момента запуска
+    open(A.load_log, "a").close(); os.utime(A.load_log)
     with open(A.chain_log, "a", encoding="utf-8") as f:
         f.write(f"{datetime.now():%F %T} сторож: {grund}; перезапуск {CHAIN_NAME}, EMB_BATCH {batch}\n")
     subprocess.Popen(["setsid", A.chain], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     ev(f"запущена цепочка, EMB_BATCH {batch}")
     time.sleep(120)
+
+
+def fehlerzeile():
+    """последняя строка вида «XxxError: …» в журнале загрузки (итог последнего Traceback)"""
+    try:
+        z = [l.strip() for l in open(A.load_log, encoding="utf-8", errors="replace").read().splitlines()[-400:]
+             if re.match(r"^[\w.]+(Error|Exception)\b", l.strip())]
+    except FileNotFoundError:
+        return None
+    return z[-1] if z else None
 
 
 def fertig():
@@ -139,6 +160,17 @@ while True:
         else:
             n_ohne = 1
         d_fail = d
+        # 22.10.2026 (W0: цепочка exakt упала 5 раз одной ошибкой «no results to fetch», СТОП не замечен 1 ч 17 мин): одна и та же
+        # ошибка (не нехватка памяти GPU) два раза подряд -- перезапуск не поможет, сразу СТОП
+        fz = fehlerzeile()
+        gleich = e > n_err and fz and fz == getattr(fehlerzeile, "vorher", None) and "out of memory" not in fz
+        fehlerzeile.vorher = fz if e > n_err else None
+        if gleich:
+            stopp(grund + f"; та же ошибка дважды: {fz[:150]}")
+            with open(A.chain_log, "a", encoding="utf-8") as f:
+                f.write(f"{datetime.now():%F %T} сторож: СТОП -- та же ошибка дважды подряд, нужен разбор: {fz[:150]}\n")
+            ev("СТОП")
+            break
         if n_ohne >= 5:
             stopp(grund + "; 5 сбоев без новых документов")
             with open(A.chain_log, "a", encoding="utf-8") as f:

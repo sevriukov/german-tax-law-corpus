@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""kopf_eigen_probe.py (24.10.2026, Владелец проекта: «реквизиты — в заголовок чанка, в самом чанке — только его текст»).
+"""kopf_eigen_probe.py (24.10.2026, владелец проекта: «реквизиты — в заголовок чанка, в самом чанке — только его текст»).
 Проба, только чтение: каждый фрагмент раскладывается на
   kopf  — реквизиты: путь (pfad_text) + вводная пункта (всё до последнего « … ») + подписи столбцов таблицы («подпись: »);
   eigen — собственный текст (слова исходника);
@@ -20,7 +20,7 @@ from multiprocessing import Pool
 
 import psycopg2
 
-sys.path.insert(0, "~/Documents/Gesetz")
+sys.path.insert(0, ".")
 from struktur_text import saeubern
 
 W = re.compile(r"[A-Za-zÄÖÜäöüß]{2,}|\d+|[§%€]")
@@ -73,7 +73,7 @@ def eins(d):
     в PDF не считаются: «gestaltungsmöglich keiten» = «gestaltungsmöglichkeiten»)"""
     global _cur
     if _cur is None:
-        con = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", password="postgres", host="localhost"); con.autocommit = True
+        con = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost"); con.autocommit = True
         _cur = con.cursor()
     cur = _cur
     cur.execute("SELECT d.source, d.full_text, p.bestanden FROM documents d LEFT JOIN dok_pruefung p ON p.document_id = d.id WHERE d.id = %s", (d,))
@@ -136,7 +136,7 @@ def eins(d):
 
 if __name__ == "__main__":
     N = int(sys.argv[1]) if len(sys.argv) > 1 else 25
-    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", password="postgres", host="localhost").cursor()
+    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost").cursor()
     cur.execute("""SELECT document_id FROM (SELECT p.document_id, p.source, p.bestanden,
                    row_number() OVER (PARTITION BY p.source, p.bestanden ORDER BY md5(p.document_id::text)) r FROM dok_pruefung p
                    WHERE EXISTS (SELECT 1 FROM struktur_fragmente f WHERE f.document_id = p.document_id)) x WHERE r <= %s""", (N,))

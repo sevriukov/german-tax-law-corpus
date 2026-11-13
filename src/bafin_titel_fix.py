@@ -9,7 +9,6 @@
   emb   (видеокарты, только под сторожем): вектор заголовка-фрагмента для изменённых документов (quellen_neu/bafin_titel_ids.json).
     python3 bafin_titel_fix.py text | emb
 """
-import os
 import json
 import re
 import sys
@@ -17,7 +16,7 @@ import sys
 import psycopg2
 from psycopg2.extras import Json
 
-con = psycopg2.connect(host=os.environ.get("PGHOST", "localhost"), user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), dbname="steuer_corpus_test")
+con = psycopg2.connect(host="localhost", user="postgres", dbname="steuer_corpus_test")
 cur = con.cursor()
 IDS = "quellen_neu/bafin_titel_ids.json"
 sp = lambda s: re.sub(r"\s+", " ", re.sub(r"\(\s+(\w+)\s+\)", r"(\1)", s)).strip()        # noqa: E731

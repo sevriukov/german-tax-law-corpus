@@ -71,7 +71,7 @@ TIERS = {  # source -> (уровень, пояснение)
 
 
 def connect(db):
-    return psycopg2.connect(dbname=db, user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), host=os.environ.get("PGHOST", "localhost"))
+    return psycopg2.connect(dbname=db, user="postgres", host="localhost")
 
 
 def vec(v):

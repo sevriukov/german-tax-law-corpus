@@ -15,8 +15,8 @@ import psycopg2
 
 from struktur_text import vorlauf_teilen
 
-VERSION = "struktur-2026-10-28v"   # 24.10: вводная — поле vorlauf
-P = "quellen_neu/vorlauf_fix/prepared/"
+VERSION = "struktur-2026-10-24v"   # 24.10: вводная — поле vorlauf
+P = "de_law_corpus/prepared/"
 
 
 def slug(s):
@@ -62,7 +62,7 @@ def zitat_von(kette, abk):
 
 
 def main():
-    con = psycopg2.connect(dbname="steuer_staging", user="postgres", password="postgres", host="localhost")
+    con = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost")
     cur = con.cursor()
     cur.execute("SELECT id, valid_from, valid_until FROM documents WHERE source = 'laws'")
     gilt = {i: (vf, vu) for i, vf, vu in cur.fetchall()}
@@ -116,7 +116,7 @@ def main():
         t = k.get("text") or ""
         buf.write("\t".join(esc(x) for x in (i, k["parent"], d, k["ebene"], k["marke"], k["ord"], werk[i], str(vf) if vf else None, g,
                                              zit[i], pfad[i], t, hashlib.sha256(t.encode()).hexdigest(),
-                                             json.dumps(k.get("eigenschaften") or {}, ensure_ascii=False), k.get("quelle", "xml_gii"), VERSION)) + "\n")
+                                             json.dumps({}), k.get("quelle", "xml_gii"), VERSION)) + "\n")
     cur.execute("DELETE FROM struktur_knoten")   # 23.10: не TRUNCATE — не ждать идущий снимок pg_dump
     buf.seek(0)
     cur.copy_expert("COPY struktur_knoten (id, parent, document_id, ebene, marke, ord, werk_id, fassung, gueltig, zitat, pfad, text_roh, "

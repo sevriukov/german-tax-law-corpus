@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 load_laws_neu.py -- исправление действующих текстов законов по официальному XML (после prepare_laws_neu.py), 08.10.2026.
-Обновляются все законы, с пересчётом фрагментов и векторов
-затронутых параграфов. Резервная копия: backups/steuer_corpus_test_2026-10-08_mit_sozialgerichten.dump (проверена).
+Решение владельца проекта: «после резервной копии и поиска ошибок -- делать по-человечески»: все законы, с пересчётом фрагментов и векторов
+затронутых параграфов. Резервная копия: /media/<user>/NAS/Gesetz_backups_2026-10/steuer_corpus_test_2026-10-08_mit_sozialgerichten.dump (проверена).
 
   порядок, текст  -> full_text заменяется официальным; прежний текст -- в таблицу documents_fulltext_backup_20261008;
                      фрагменты документа удаляются и строятся заново (тот же разборщик, что был у законов), векторы -- на обеих картах
@@ -36,7 +36,7 @@ def vec(v):
 
 def law_names():
     out = {}
-    for f in Path("de_law_corpus/gii_aktuell").glob("*.zip"):
+    for f in Path("quellen_roh/gii_aktuell/2026-10-08").glob("*.zip"):
         try:
             z = zipfile.ZipFile(f)
             root = ET.fromstring(z.read(next(n for n in z.namelist() if n.endswith(".xml"))))
@@ -51,7 +51,7 @@ def law_names():
 def main():
     from sentence_transformers import SentenceTransformer
     from rebuild_structured_gpu import _laws_chunker
-    conn = psycopg2.connect(dbname="steuer_corpus_test", user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), host=os.environ.get("PGHOST", "localhost"))
+    conn = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost")
     cur = conn.cursor()
     rows = [json.loads(l) for l in open(P.OUT, encoding="utf-8")]
     cur.execute("CREATE TABLE IF NOT EXISTS documents_fulltext_backup_20261008 (id integer PRIMARY KEY, doc_id text, full_text text, cls text)")

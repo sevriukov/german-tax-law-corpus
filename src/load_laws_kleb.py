@@ -4,7 +4,7 @@ load_laws_kleb.py -- поправка к load_laws_neu.py (08.10.2026): при �
 («Schlusssatz»), приклеивался к последнему слову перечня («Zeitpunktabgegeben», AO § 152). prepare_laws_neu.text_of исправлен;
 здесь тексты, прочитанные с ошибкой, заменяются заново, фрагменты и векторы пересчитываются (обе карты).
 Список -- de_law_corpus/prepared/laws_kleb.json ({id, text}), его готовит сверка повторным чтением XML.
-ЗАПУСКАТЬ ТОЛЬКО С РАЗРЕШЕНИЯ СЕРГЕЯ (пишет в базу и считает векторы).
+ЗАПУСКАТЬ ТОЛЬКО С РАЗРЕШЕНИЯ ВЛАДЕЛЬЦА ПРОЕКТА (пишет в базу и считает векторы).
     python3 -u load_laws_kleb.py
 """
 import os
@@ -23,7 +23,7 @@ def vec(v):
 def main():
     from sentence_transformers import SentenceTransformer
     from rebuild_structured_gpu import _laws_chunker
-    conn = psycopg2.connect(dbname="steuer_corpus_test", user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), host=os.environ.get("PGHOST", "localhost"))
+    conn = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost")
     cur = conn.cursor()
     todo = json.load(open("de_law_corpus/prepared/laws_kleb.json", encoding="utf-8"))
     cur.execute("SELECT id FROM documents WHERE source = 'laws' AND metadata->>'kleb_fix' = '1'")

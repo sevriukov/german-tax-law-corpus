@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""oapen_literatur_prep.py (19.10.2026, Сергей «2а»): 12 открытых книг OAPEN из NUR_LESEN/1_lesen -> база литературы steuer_literatur
+"""oapen_literatur_prep.py (19.10.2026, владелец проекта «2а»): 12 открытых книг OAPEN из NUR_LESEN/1_lesen -> база литературы steuer_literatur
 (уровень 3: служебное пользование, наружу не уходит, перед использованием проверяется по уровню 1). Лицензии проверены по титульным
 страницам 19.10: CC BY 4.0 (Nomos: Abel, Glenk, Hoppe; Mohr: Möslein/Omlor), CC BY-SA 4.0 (Niemann, Plesdonat, Bueren),
 CC BY-NC-ND 4.0 (Mohr: Renning, Wizemann, Badenhoop, Wengert, Omlor/Möslein/Grundmann) -- лицензия пишется в заголовок.

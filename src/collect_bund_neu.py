@@ -3,7 +3,7 @@
 collect_bund_neu.py -- два официальных источника уровня 1 (04.10.2026), сбор неспеша, с возобновлением:
 
   vwv   Verwaltungsvorschriften des Bundes (verwaltungsvorschriften-im-internet.de; robots: без ограничений) -- все ведомства,
-        пауза 6-10 с -> quellen_neu/vwv/<файл>.htm + index.tsv (ведомство, заголовок, файл)
+        пауза 6-10 с -> quellen_roh/vwv/2026-10-04/<файл>.htm + index.tsv (ведомство, заголовок, файл)
   bgbl  Bundesgesetzblatt Teil I и II с 2023 г. (recht.bund.de; robots: Crawl-delay 30) -- по карте сайта,
         PDF «regelungstext» каждой публикации -> quellen_neu/bgbl/<год>_<номер>.pdf + index.tsv
   python3 collect_bund_neu.py vwv|bgbl

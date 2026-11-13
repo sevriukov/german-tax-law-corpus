@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 prepare_laws_neu.py -- сверка действующих текстов законов в базе (источник laws, взят из стороннего набора harshildarji/bundesrecht)
-с официальным XML gesetze-im-internet.de (de_law_corpus/gii_aktuell/*.zip) и подготовка исправленных текстов.
+с официальным XML gesetze-im-internet.de (quellen_roh/gii_aktuell/2026-10-08/*.zip) и подготовка исправленных текстов.
 
 Причина (08.10.2026): в стороннем наборе абзац разложен на «текст абзаца» и отдельные массивы перечней, порядок между ними потерян;
 наш сборщик текста (normalize_v2.extract_law_text) выводил сначала текст, потом перечни. Официальный XML хранит порядок документа.
@@ -12,7 +12,6 @@ prepare_laws_neu.py -- сверка действующих текстов зак
 «нет в XML» -- есть в базе, но не в официальном тексте (отменена или иначе названа).
 В базу НЕ пишет: загрузка -- load_laws_neu.py.
 """
-import os
 import collections
 import difflib
 import json
@@ -24,7 +23,7 @@ from pathlib import Path
 
 import psycopg2
 
-SRC = Path("de_law_corpus/gii_aktuell")
+SRC = Path("quellen_roh/gii_aktuell/2026-10-08")
 OUT = Path("de_law_corpus/prepared/laws_neu.jsonl")
 BREAK = ("P", "LA", "DT", "DD", "entry", "Title", "BR", "row", "tgroup")
 BLOCK = ("P", "DL", "DD", "LA", "table", "Title", "Revision")
@@ -103,7 +102,7 @@ toks = lambda t: re.findall(r"[a-zäöüß]{2,}", t.lower())
 
 
 def main():
-    cur = psycopg2.connect(dbname="steuer_corpus_test", user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), host=os.environ.get("PGHOST", "localhost")).cursor()
+    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost").cursor()
     cur.execute("SELECT id, title, full_text FROM documents WHERE source = 'laws'")
     db = {}
     dup_db = 0

@@ -39,7 +39,7 @@ import psycopg2
 DB_CONFIG = {
     "dbname": "steuer_corpus_test",
     "user": "postgres",
-    "password": os.environ.get("PGPASSWORD"),
+    # Passwort nicht im Code: ~/.pgpass, PGPASSFILE oder PGPASSWORD (libpq)
     "host": "localhost",
     "port": "5432",
 }

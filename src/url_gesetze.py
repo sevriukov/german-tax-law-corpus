@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """url_gesetze.py (19.10.2026, проверка качества B4): у ~14 тыс. параграфов законов (source=laws) адрес «N/A».
-Адрес строится из официального перечня gesetze-im-internet.de (de_law_corpus/gii_aktuell/gii-toc.xml: полное название -> каталог закона)
+Адрес строится из официального перечня gesetze-im-internet.de (quellen_roh/gii_aktuell/2026-10-08/gii-toc.xml: полное название -> каталог закона)
 по полному названию из doc_id «law_NNNNN__<название>_NNN_<§N|ArtN|…>»; если у другого параграфа того же закона адрес уже есть -- каталог берётся оттуда.
 Параграф: «§ N» -> <каталог>/__N.html, «Art N» -> <каталог>/art_N.html (строчными: art_v.html), прочее (Inhaltsübersicht, Anlage) -> <каталог>/.
 Меняется только documents.url (фрагменты и векторы не трогаются); список изменённых -- quellen_neu/url_gesetze_geaendert.jsonl.
@@ -8,7 +8,6 @@
     python3 url_gesetze.py --pruefen  # + запрос HEAD к 30 случайным адресам (пауза 2 с; robots.txt сайта ничего не запрещает)
     python3 url_gesetze.py --schreiben
 """
-import os
 import html
 import json
 import random
@@ -23,10 +22,10 @@ BASE = "https://www.gesetze-im-internet.de/"
 norm = lambda s: re.sub(r"[^0-9a-zäöüß]", "", s.lower())          # noqa: E731
 
 toc = {}
-for t, l in re.findall(r"<title>(.*?)</title>\s*<link>(.*?)</link>", open("de_law_corpus/gii_aktuell/gii-toc.xml", encoding="utf-8").read(), re.S):
+for t, l in re.findall(r"<title>(.*?)</title>\s*<link>(.*?)</link>", open("quellen_roh/gii_aktuell/2026-10-08/gii-toc.xml", encoding="utf-8").read(), re.S):
     toc.setdefault(norm(html.unescape(t)), set()).add(l.split("gesetze-im-internet.de/")[1].split("/")[0])
 
-con = psycopg2.connect(host=os.environ.get("PGHOST", "localhost"), user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), dbname="steuer_corpus_test")
+con = psycopg2.connect(host="localhost", user="postgres", dbname="steuer_corpus_test")
 cur = con.cursor()
 cur.execute("SELECT id, doc_id, url FROM documents WHERE source='laws' AND doc_id ~ '^law_[0-9]+__'")
 rows = cur.fetchall()

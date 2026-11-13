@@ -12,7 +12,7 @@ import json
 import re
 import subprocess
 
-D = "quellen_neu/landes_grundsteuer"
+D = "quellen_roh/landes_grundsteuer/2026-10-20"
 DOCS = [  # файл, doc_id, source, заголовок, адрес, год
     ("by_0000010126.pdf", "landtag_by_18_15755", "landtag_drucksachen", "Bayerischer Landtag Drs. 18/15755 (10.05.2021): Gesetzentwurf der Staatsregierung — Bayerisches Grundsteuergesetz (BayGrStG), mit Begründung",
      "https://www.bayern.landtag.de/www/ElanTextAblage_WP18/Drucksachen/Basisdrucksachen/0000010000/0000010126.pdf", 2021),

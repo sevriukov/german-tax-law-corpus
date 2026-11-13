@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""rag_qualitaetstest.py -- программа проверки качества RAG-базы (19.10.2026, поручение Сергея: «все стандартные проверки —
+"""rag_qualitaetstest.py -- программа проверки качества RAG-базы (19.10.2026, поручение владельца проекта: «все стандартные проверки —
 целостность, правильность заполнения, короткие и пустые чанки, обрывы чанков, несовпадение с именем и заголовком»).
 Дополняет pruefung_basis.py (тот считает пустые/огромные тексты, даты, кодировку, дубли документов). Только чтение, только CPU.
 Разделы: A целостность, B заполнение и заголовки, C чанки (пустые, короткие, обрывы), D качество текста, E индексы,
@@ -178,7 +178,7 @@ def selbstsuche(cur, n=200):
 
 def main():
     stand = json.load(open(OUT)) if os.path.exists(OUT) else {}
-    con = psycopg2.connect(host=os.environ.get("PGHOST", "localhost"), port=5432, user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), dbname="steuer_corpus_test")
+    con = psycopg2.connect(host="localhost", port=5432, user="postgres", dbname="steuer_corpus_test")
     con.autocommit = True
     cur = con.cursor()
     cur.execute("SET statement_timeout = '15min'")

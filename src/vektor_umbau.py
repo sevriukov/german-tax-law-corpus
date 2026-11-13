@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""vektor_umbau.py (20.10.2026, Сергей: «тогда 2 делай» -- три правки с пересчётом векторов, только затронутые фрагменты, не вся база).
+"""vektor_umbau.py (20.10.2026, владелец проекта: «тогда 2 делай» -- три правки с пересчётом векторов, только затронутые фрагменты, не вся база).
   titel     -- заголовки законов, одинаковые внутри одного закона (Artikelgesetze: «HStruktG § 2» в Art 1 и в Art 3): статья/раздел
-               из официального XML gesetze-im-internet.de (de_law_corpus/gii_aktuell/<каталог>.zip, по порядку норм) ->
+               из официального XML gesetze-im-internet.de (quellen_roh/gii_aktuell/2026-10-08/<каталог>.zip, по порядку норм) ->
                documents.title «HStruktG Art 3 § 2», заголовок-фрагмент «<Langtitel>: HStruktG Art 3 (Bundesbeamtengesetz) § 2» + вектор.
   sperrsatz -- текст «в разрядку» («A b s c h n i t t 1», «D e r B u n d e s m i n i s t e r») во фрагментах всех источников
                склеивается тем же правилом, что в anonymizer.vorbereiten (пробел перед заглавной -- граница слова) + вектор.
@@ -19,7 +19,7 @@ import xml.etree.ElementTree as ET
 
 import psycopg2
 
-con = psycopg2.connect(host=os.environ.get("PGHOST", "localhost"), user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), dbname="steuer_corpus_test")
+con = psycopg2.connect(host="localhost", user="postgres", dbname="steuer_corpus_test")
 cur = con.cursor()
 PROBE = "--probe" in sys.argv
 BATCH = 2000
@@ -48,7 +48,7 @@ _XML = {}
 def xml_info(slug):
     """(jurabk, ausfertigung-datum, langue, [(enbez, gliederungsbez, gliederungstitel)] по порядку норм) из XML закона"""
     if slug not in _XML:
-        z = zipfile.ZipFile(f"de_law_corpus/gii_aktuell/{slug}.zip")
+        z = zipfile.ZipFile(f"quellen_roh/gii_aktuell/2026-10-08/{slug}.zip")
         x = ET.fromstring(z.read([n for n in z.namelist() if n.endswith(".xml")][0]))
         titel, out = {}, []
         for n in x.iter("norm"):
@@ -69,7 +69,7 @@ def xml_info(slug):
 
 def _slug(u):
     m = re.match(r"https?://www\.gesetze-im-internet\.de/([^/]+)/", u or "")
-    return m.group(1) if m and os.path.exists(f"de_law_corpus/gii_aktuell/{m.group(1)}.zip") else None
+    return m.group(1) if m and os.path.exists(f"quellen_roh/gii_aktuell/2026-10-08/{m.group(1)}.zip") else None
 
 
 def titel():
@@ -139,8 +139,82 @@ def titel():
 SPERR = re.compile(r"(?<![\w.])(?:[A-Za-zÄÖÜäöüß] ){3,}[A-Za-zÄÖÜäöüß](?![\w])")
 
 
+# 20.10.2026 (владелец проекта: «придётся проводить анализ таких длинных слов… база должна быть вылизана до блеска»): строчные слова в разрядке
+# без заглавной на границе склеиваются («p s y c h o s o m a t i s c h e u n d …») -> разбиение по частотам слов самой базы
+# (wortfrequenz_bauen.py, de_wortfrequenz_basis.tsv.gz), минимальная сумма -log(частоты); разбиение принимается, только если склейки
+# нет в словаре и среди частей есть служебное слово -- составные слова («grundsteuerreformgesetz») не режутся.
+_F, _N = {}, 1
+FUNK = set("der die das den dem des ein eine einer eines einem einen und oder sowie von vom zu zum zur im in am an auf aus bei mit nach "
+           "über unter vor für gegen durch ohne bis als wie auch nicht ist sind wird werden wurde hat haben sich es er sie wir ihr "
+           "so dass daß nach soweit sofern wenn ob".split())
+
+
+def _wf():
+    global _N
+    if not _F:
+        import gzip
+        for l in gzip.open("de_wortfrequenz_basis.tsv.gz", "rt", encoding="utf-8"):
+            w, k = l.rstrip("\n").split("\t")
+            _F[w] = int(k)
+        _N = sum(_F.values())
+    return _F
+
+
+def segment(w):
+    import math
+    F = _wf()
+    s0 = w.lower()
+    if len(s0) < 6 or s0 in F:
+        return w
+    n, maxl = len(s0), 40
+    best, back = [0.0] + [math.inf] * n, [0] * (n + 1)
+    for j in range(1, n + 1):
+        for i in range(max(0, j - maxl), j):
+            k = F.get(s0[i:j])
+            if k and (j - i > 1) and best[i] - math.log(k / _N) < best[j]:
+                best[j], back[j] = best[i] - math.log(k / _N), i
+    if best[n] == math.inf:
+        return w
+    teile, j = [], n
+    while j > 0:
+        teile.append(w[back[j]:j])
+        j = back[j]
+    teile.reverse()
+    # части, кроме служебных слов, -- не короче 4 букв и не реже 10 раз в базе (иначе режутся фамилии: «Faltlhauser» -> «Fa ltl haus er»)
+    gut = all(t.lower() in FUNK or (len(t) >= 4 and F.get(t.lower(), 0) >= 10) for t in teile)
+    # повод разбить -- служебное слово от 3 букв (der, und, von, für, zum); «er», «in» сами по себе -- нет («Systemplanerin»)
+    return " ".join(teile) if len(teile) > 1 and gut and any(t.lower() in FUNK and len(t) >= 3 for t in teile) else w
+
+
 def sperr_fix(t):
-    return SPERR.sub(lambda m: re.sub(r" (?=[A-ZÄÖÜ])", "  ", m.group(0)).replace("  ", "\x00").replace(" ", "").replace("\x00", " "), t)
+    def lauf(m):
+        woerter = re.sub(r" (?=[A-ZÄÖÜ])", "  ", m.group(0)).replace("  ", "\x00").replace(" ", "").split("\x00")
+        return " ".join(segment(x) for x in woerter)
+    return SPERR.sub(lauf, t)
+
+
+def sperrsatz2():
+    """уже свёрнутые первым правилом (резерв art='sperrsatz') -- заново из прежнего текста с разбиением склеек"""
+    cur.execute("""SELECT b.id, b.alt, c.chunk_text FROM umbau_backup_20261020 b JOIN document_chunks c ON c.id = b.id
+                   WHERE b.art = 'sperrsatz' AND b.id NOT IN (SELECT id FROM umbau_backup_20261020 WHERE art = 'sperrsatz2')""")
+    rows = cur.fetchall()
+    neu = [(i, akt, sperr_fix(alt)) for i, alt, akt in rows]
+    neu = [x for x in neu if x[2] != x[1]]
+    print(f"sperrsatz2: из {len(rows)} свёрнутых меняется {len(neu)}", flush=True)
+    for x in neu[:5]:
+        d = [w for w in x[2].split() if w not in set(x[1].split())][:6]
+        print("    новое:", d, flush=True)
+    if PROBE:
+        return
+    for s in range(0, len(neu), BATCH):
+        part = neu[s:s + BATCH]
+        e = emb([x[2] for x in part])
+        for (i, akt, nt), v in zip(part, e):
+            cur.execute("INSERT INTO umbau_backup_20261020 VALUES (%s, 'sperrsatz2', %s) ON CONFLICT DO NOTHING", (i, akt))
+            cur.execute("UPDATE document_chunks SET chunk_text = %s, embedding = %s::vector WHERE id = %s", (nt, vec(v), i))
+        con.commit()
+        print(f"  sperrsatz2: изменено {s + len(part)}", flush=True)
+    print(f"UMBAU_SPERRSATZ2_DONE: {len(neu)}", flush=True)
 
 
 def bearbeiten(art, sql, args, umbau):
@@ -194,6 +268,6 @@ def paragraf():
 
 
 if __name__ == "__main__":
-    {"titel": titel, "sperrsatz": sperrsatz, "paragraf": paragraf}[sys.argv[1]]()
+    {"titel": titel, "sperrsatz": sperrsatz, "sperrsatz2": sperrsatz2, "paragraf": paragraf}[sys.argv[1]]()
     if _pool is not None:
         _pool.close()

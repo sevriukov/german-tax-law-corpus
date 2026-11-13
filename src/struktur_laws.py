@@ -60,7 +60,7 @@ def _zelle(e):
 
 
 def tabelle_daten(tb):
-    """24.10 (Владелец проекта: таблицы, шаг 2) — общий разбор таблицы с <thead> для текста фрагментов (шаг 1) и таблиц-данных (шаг 2):
+    """24.10 (владелец проекта: таблицы, шаг 2) — общий разбор таблицы с <thead> для текста фрагментов (шаг 1) и таблиц-данных (шаг 2):
     подпись каждого столбца — из ВСЕХ строк шапки по разметке (colname / namest–nameend: «Zinssatz» над столбцами 2–12, под ним «2,0 %»
     -> «Zinssatz 2,0 %»); ячейка шапки на всю ширину — название таблицы; две таблицы бок о бок (подписи повторяются после пустого столбца:
     GKG/RVG Anlage 2) — одна логическая таблица, строки сначала левой, потом правой половины.
@@ -347,7 +347,7 @@ def parse(path):
 
 def main():
     probe = sys.argv[sys.argv.index("--probe") + 1].split(",") if "--probe" in sys.argv else None
-    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", password="postgres", host="localhost").cursor()
+    cur = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost").cursor()
     cur.execute("SELECT id, title, full_text FROM documents WHERE source = 'laws' AND valid_until IS NULL")
     db = {}
     for i, title, text in cur.fetchall():

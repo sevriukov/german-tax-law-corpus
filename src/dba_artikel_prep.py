@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""dba_artikel_prep.py (19.10.2026, Сергей «1а»: DBA делить на статьи). Находимость по международному налоговому праву 45 %:
+"""dba_artikel_prep.py (19.10.2026, владелец проекта «1а»: DBA делить на статьи). Находимость по международному налоговому праву 45 %:
 вопрос о конкретной статье соглашения (Betriebsstätte, Dividenden, Arbeitnehmer …) ищется в целом документе на 30–150 тыс. знаков.
 Каждый документ source='dba' из базы -> части по строкам «Artikel N» (отдельной строкой); счёт статей с 1 заново = новая часть
 (Vertragsgesetz -> Abkommen -> Protokoll …). Название части -- по словам в тексте перед первой статьёй.
@@ -7,7 +7,6 @@
 Статьи не на немецком (мало немецких служебных слов) -- пропуск. Целые документы остаются (сравнение находимости до/после).
     python3 dba_artikel_prep.py   -> de_law_corpus/prepared/dba_artikel.jsonl
 """
-import os
 import json
 import re
 
@@ -33,7 +32,7 @@ def teilname(vor, erster):
 
 
 def main():
-    con = psycopg2.connect(host=os.environ.get("PGHOST", "localhost"), port=5432, user=os.environ.get("PGUSER", "postgres"), password=os.environ.get("PGPASSWORD"), dbname="steuer_corpus_test")
+    con = psycopg2.connect(host="localhost", port=5432, user="postgres", dbname="steuer_corpus_test")
     cur = con.cursor()
     cur.execute("SELECT doc_id, title, full_text, url, valid_from, valid_until, effective_date FROM documents WHERE source='dba' AND doc_id !~ '_art[0-9]'")
     n_dok = n_art = n_fremd = 0

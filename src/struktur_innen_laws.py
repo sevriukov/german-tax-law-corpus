@@ -5,7 +5,7 @@ import hashlib, io, json
 from collections import defaultdict
 import psycopg2
 kn = {}
-for l in open("quellen_neu/vorlauf_fix/prepared/struktur_knoten_laws.jsonl", encoding="utf-8"):
+for l in open("de_law_corpus/prepared/struktur_knoten_laws.jsonl", encoding="utf-8"):
     k = json.loads(l); kn[k["id"]] = k
 kids = defaultdict(list)
 for k in kn.values():
@@ -36,9 +36,9 @@ for pid, p in kn.items():
         if len(t) > 25000:          # 22.10 проверка: длиннее предела модели (8 192 токена) -> без вектора целого узла; полноту дают его абзацы/листья
             art = art + "_lang"
         for d in p["document_ids"]:
-            buf.write("\t".join(esc(x) for x in (kid, d, kn[kid]["ord"], pf, t, hashlib.sha256(t.encode()).hexdigest(), "struktur-2026-10-28v", art)) + "\n")
+            buf.write("\t".join(esc(x) for x in (kid, d, kn[kid]["ord"], pf, t, hashlib.sha256(t.encode()).hexdigest(), "struktur-2026-10-22", art)) + "\n")
             n += 1
-con = psycopg2.connect(dbname="steuer_staging", user="postgres", password="postgres", host="localhost"); cur = con.cursor()
+con = psycopg2.connect(dbname="steuer_corpus_test", user="postgres", host="localhost"); cur = con.cursor()
 cur.execute("DELETE FROM struktur_fragmente WHERE art IN ('para', 'abs', 'para_lang', 'abs_lang')")   # 23.10: и длинные — иначе старые остаются
 buf.seek(0)
 cur.copy_expert("COPY struktur_fragmente (knoten, document_id, ord, pfad_text, text_roh, hash, version, art) FROM STDIN", buf)

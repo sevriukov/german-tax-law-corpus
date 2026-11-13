@@ -19,7 +19,7 @@ OUT = "de_law_corpus/prepared/oldp_fg_api.jsonl"
 def get(url):
     for v in range(5):
         try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "LeckerMath-Forschung (sevriukov, research)"}), timeout=90) as r:
+            with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "LeckerMath-Forschung (research)"}), timeout=90) as r:
                 return json.loads(r.read())
         except Exception as e:                   # noqa: BLE001
             print("повтор", url, e, flush=True)

@@ -2,9 +2,9 @@
 """
 prepare_haftung.py -- решения об ответственности налоговых консультантов -> de_law_corpus/prepared/*.jsonl (формат load_new_sources.py).
 
-  olg_haftung      суды земель (OLG, LG, AG): официальная база NRWE (quellen_neu/haftung/nrwe/*.html)
-                   + решения других земель из Open Legal Data (quellen_neu/haftung/old/*.json; ODbL, тексты решений -- § 5 UrhG)
-  bgh_haftung_alt  BGH, IX сенат, 2000-2009 с сайта суда (quellen_neu/haftung/bgh_alt/*.pdf); источник в базе -- bgh_haftung
+  olg_haftung      суды земель (OLG, LG, AG): официальная база NRWE (quellen_roh/haftung_nrwe/2026-10-08/*.html)
+                   + решения других земель из Open Legal Data (quellen_roh/haftung_old/2026-10-08/old/*.json; ODbL, тексты решений -- § 5 UrhG)
+  bgh_haftung_alt  BGH, IX сенат, 2000-2009 с сайта суда (quellen_roh/haftung_bgh_alt/2026-10-08/*.pdf); источник в базе -- bgh_haftung
 
 Отбор строже, чем при первом просмотре (auswerten.py): слово «Steuerberater» должно встречаться плотно,
 иначе в выборку попадают посторонние дела, где консультант лишь упомянут (пример: LG Dortmund 2 O 387/14, 800 тыс. знаков).
