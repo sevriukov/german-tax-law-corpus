@@ -49,3 +49,7 @@ Zugang zur Datenbank über die Umgebungsvariablen `PGHOST`, `PGUSER`, `PGPASSWOR
 Voraussetzungen: PostgreSQL mit pgvector, Python 3.11+, `sentence-transformers` (Modell `BAAI/bge-m3`), spaCy (`de_core_news_sm`).
 
 Kein Rechts- oder Steuerrat. Keine externe Bewertung, keine Prüfung durch eine berufsrechtlich befugte Person.
+
+## Lizenz
+
+Code (Skripte in `src/`): Apache-2.0 (`LICENSE`, `NOTICE`; © 2026 Sergei Sevriukov). Der Datensatz auf Hugging Face steht unter CC BY 4.0; daran ändert sich nichts.

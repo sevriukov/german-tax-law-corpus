@@ -1,5 +1,8 @@
 # Änderungen
 
+## v0.4.1 – 14.11.2026
+- **Lizenz des Codes: Apache-2.0** — `LICENSE` (vollständiger Text der Apache License 2.0) und `NOTICE` (© 2026 Sergei Sevriukov) neu; README mit Abschnitt „Lizenz“. Der Datensatz auf Hugging Face bleibt unter CC BY 4.0.
+
 ## v0.4.0 – 13.11.2026 (Skripte; Datensatz nach Stand V3 folgt)
 - Abgleich mit dem Ausgangstext (`quelle_lauf.py`): Tabellen werden über die eigene Tabellenschicht geprüft, Randnummern als eigene Zeile, Spaltenüberschriften nur bei Tabellenzeilen.
 - Sperrschrift und zerrissene Wörter (`vektor_umbau.py`): Zusammenführung nach den Worthäufigkeiten der Datenbank selbst; zusammengesetzte Wörter werden nicht getrennt.
