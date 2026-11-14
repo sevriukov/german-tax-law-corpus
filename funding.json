@@ -1,0 +1,64 @@
+{
+  "version": "v1.1.0",
+  "entity": {
+    "type": "individual",
+    "role": "maintainer",
+    "name": "Sergei Sevriukov",
+    "email": "kontakt@leckermath.de",
+    "phone": "",
+    "description": "Sole maintainer of an open, non-commercial research project on German tax law, run as a sole proprietorship in Dortmund, Germany. I build open data and tools so that tax questions can be answered with the law that was valid on the question date: an open corpus with historical law versions and an open retrieval benchmark. Data are CC BY 4.0, code Apache-2.0. Project site: https://leckermath.de",
+    "webpageUrl": {
+      "url": "https://github.com/sevriukov"
+    }
+  },
+  "projects": [
+    {
+      "guid": "german-tax-law-corpus",
+      "name": "German tax-law corpus with historical law versions",
+      "description": "Open German tax-law corpus with historical law versions: each norm is stored with its validity period. Dataset on Hugging Face (https://huggingface.co/datasets/sevriukov/german-tax-law-corpus), version 1.1.1 (13.11.2026): 187,025 documents from 17 sources, 3,077,123 fragments split along each document's own structure (paragraph, subsection, sentence; margin numbers). The dataset has been downloaded 286 times (221 in the last month) without promotion. Scripts to collect, split and verify the corpus against the source text are in this repository (v0.4.1, Apache-2.0). The open benchmark KF2 (questions, key, scoring; CC BY 4.0) measures whether retrieval finds the norm version valid on the question date: top-1 80.4 %, top-10 96.8 % (open key v2.1.1, 281 scored questions).",
+      "webpageUrl": {
+        "url": "https://github.com/sevriukov/german-tax-law-corpus"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/sevriukov/german-tax-law-corpus"
+      },
+      "licenses": [
+        "spdx:Apache-2.0",
+        "spdx:CC-BY-4.0"
+      ],
+      "tags": [
+        "law",
+        "legal-tech",
+        "dataset",
+        "information-retrieval",
+        "benchmark",
+        "germany",
+        "taxation"
+      ]
+    }
+  ],
+  "funding": {
+    "channels": [
+      {
+        "guid": "bank",
+        "type": "bank",
+        "address": "",
+        "description": "Direct bank transfer (EUR/USD). Please e-mail for details."
+      }
+    ],
+    "plans": [
+      {
+        "guid": "maintenance",
+        "status": "active",
+        "name": "Maintenance, new law versions and open evaluation",
+        "description": "Keeping the corpus current (adding new law versions and court decisions from official sources), verifying every split against the source text, publishing the open benchmark and measurement reports, and compute for training a small open model that ranks norms.",
+        "amount": 10000,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": [
+          "bank"
+        ]
+      }
+    ]
+  }
+}

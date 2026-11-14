@@ -1,5 +1,8 @@
 # Änderungen
 
+## v0.4.2 – 14.11.2026
+- `funding.json` (Format fundingjson.org v1.1.0) für den Förderkatalog FLOSS/fund: Projekt, Lizenzen, Kontakt kontakt@leckermath.de, Förderplan einmalig 10 000 USD (Pflege, neue Fassungen, offene Messung).
+
 ## v0.4.1 – 14.11.2026
 - **Lizenz des Codes: Apache-2.0** — `LICENSE` (vollständiger Text der Apache License 2.0) und `NOTICE` (© 2026 Sergei Sevriukov) neu; README mit Abschnitt „Lizenz“. Der Datensatz auf Hugging Face bleibt unter CC BY 4.0.
 
