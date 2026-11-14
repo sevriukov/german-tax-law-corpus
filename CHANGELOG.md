@@ -1,5 +1,8 @@
 # Änderungen
 
+## v0.4.3 – 14.11.2026
+- `SECURITY.md`: Meldung von Sicherheitslücken an kontakt@leckermath.de (nicht als öffentliches Issue), unterstützte Version, Projektführung (ein Maintainer, Änderungen über CHANGELOG und Git-Tags).
+
 ## v0.4.2 – 14.11.2026
 - `funding.json` (Format fundingjson.org v1.1.0) für den Förderkatalog FLOSS/fund: Projekt, Lizenzen, Kontakt kontakt@leckermath.de, Förderplan einmalig 10 000 USD (Pflege, neue Fassungen, offene Messung).
 
