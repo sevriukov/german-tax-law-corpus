@@ -21,7 +21,10 @@ Skripte, mit denen der offene Teil des Korpus (Datensatz `german-tax-law-corpus`
 |---|---|---|---|
 | 20.10.2026 | v0.2.0 | 0.2 (25.10.2026) | Allgemeiner Lader, Qualitätsprüfung, EU-Recht, Grundsteuer der Länder |
 | 02.11.2026 | v0.3.0 | 1.0.1 | Teilung entlang der Gliederung jedes Dokuments, Abgleich jedes Abschnitts mit dem Ausgangstext, Ausfuhr `data/fragments` mit Pfad |
-| 13.11.2026 | **v0.4.0** | 1.0.1 (nächste Version nach Stand V3 in Vorbereitung) | Abgleich mit Tabellenschicht, Gliederungsbaum, ungekürzte Überschriften, Ausfuhr ohne nicht öffentliche Dokumente, Datenbankzugang ohne Passwort im Code |
+| 13.11.2026 | v0.4.0 | 1.1 → 1.1.1 (13.11.2026) | Abgleich mit Tabellenschicht, Gliederungsbaum, ungekürzte Überschriften, Ausfuhr ohne nicht öffentliche Dokumente, Datenbankzugang ohne Passwort im Code |
+| 14.11.2026 | v0.4.1 | 1.1.1 | Lizenz des Codes Apache-2.0 (`LICENSE`, `NOTICE`); Datensatz bleibt CC BY 4.0 |
+| 14.11.2026 | v0.4.2 | 1.1.1 | `funding.json` für den Förderkatalog FLOSS/fund |
+| 14.11.2026 | **v0.4.3** | **1.1.1** | `SECURITY.md` (Meldeweg, Projektführung) |
 
 Beschreibung der Datenbank: [leckermath.de/steuerbasis.html](https://leckermath.de/steuerbasis.html) · Datensatz: [huggingface.co/datasets/sevriukov/german-tax-law-corpus](https://huggingface.co/datasets/sevriukov/german-tax-law-corpus)
 
